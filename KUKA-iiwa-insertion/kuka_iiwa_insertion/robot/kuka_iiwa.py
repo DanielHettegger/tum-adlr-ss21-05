@@ -23,6 +23,7 @@ class KukaIIWA:
     self.useInverseKinematics = True
     self.useNullSpace = False
     self.useOrientation = True
+    self.useSimulation = True
     self.kukaEndEffectorIndex = 6#6
 
     #lower limits for null space
@@ -83,7 +84,7 @@ class KukaIIWA:
   def get_action_dimension(self):
     if (self.useInverseKinematics):
       return len(self.motorIndices)
-    return 6  #position x,y,z and roll/pitch/yaw euler angles of end effector
+    return 4  #position x,y,z and roll/pitch/yaw euler angles of end effector
 
   def get_observation_dimension(self):
     return len(self.get_observation())
@@ -138,8 +139,8 @@ class KukaIIWA:
       self.endEffectorAngle = self.endEffectorAngle + da
       pos = self.endEffectorPos
       orn = p.getQuaternionFromEuler([0, -math.pi, 0])  # -math.pi,yaw])
-      if (self.useNullSpace == 1):
-        if (self.useOrientation == 1):
+      if (self.useNullSpace):
+        if (self.useOrientation):
           jointPoses = p.calculateInverseKinematics(self.kukaUid, self.kukaEndEffectorIndex, pos,
                                                     orn, self.ll, self.ul, self.jr, self.rp)
         else:
@@ -151,7 +152,7 @@ class KukaIIWA:
                                                     jointRanges=self.jr,
                                                     restPoses=self.rp)
       else:
-        if (self.useOrientation == 1):
+        if (self.useOrientation):
           jointPoses = p.calculateInverseKinematics(self.kukaUid,
                                                     self.kukaEndEffectorIndex,
                                                     pos,
@@ -164,7 +165,7 @@ class KukaIIWA:
       #print(jointPoses)
       #print("self.kukaEndEffectorIndex")
       #print(self.kukaEndEffectorIndex)
-      if (self.useSimulation == 1):
+      if (self.useSimulation):
         for i in range(self.kukaEndEffectorIndex + 1):
           #print(i)
           p.setJointMotorControl2(bodyUniqueId=self.kukaUid,

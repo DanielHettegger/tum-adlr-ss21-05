@@ -22,30 +22,18 @@ import numpy as np
 import torch
 import gym
 
-import KUKA-iiwa-insertion
-
-if __name__ == "__main__":
-    main()
+import kuka_iiwa_insertion
 
 from agent import TRPOAgent
 
 def main():
-    nn = torch.nn.Sequential(torch.nn.Linear(8, 64), torch.nn.Tanh(),
-                             torch.nn.Linear(64, 2))
-    agent = TRPOAgent(policy=nn)
-
-    #agent.load_model("agent.pth")
-    agent.train("kuka_iiwa_insertion-v0", seed=0, batch_size=5000, iterations=100,
-                max_episode_length=250, verbose=True)
-    agent.save_model("agent.pth")
-
     env = gym.make('kuka_iiwa_insertion-v0')
-    ob = env.reset()
-    iterator = 1
-    while True:
-        action = agent(ob)
-        ob, _, done, _ = env.step(action)
-        env.render()
-        if done:
-            ob = env.reset()
-            time.sleep(1./50.)
+    env.reset()
+    for _ in range(100000):
+        #env.render()
+        env.step(env.action_space.sample()) # take a random action
+    env.close()
+
+
+if __name__ == "__main__":
+    main()
