@@ -26,12 +26,17 @@ import kuka_iiwa_insertion
 
 from agent import TRPOAgent
 
+
 def main():
     env = gym.make('kuka_iiwa_insertion-v0')
     env.reset()
     for _ in range(100000):
-        #env.render()
-        env.step(env.action_space.sample()) # take a random action
+        # env.render()
+        obs, rewards, dones, info = env.step(
+            env.action_space.sample())  # take a random action
+        print('Action: ', env.action_space.sample())
+        print('observation: ', obs)
+        print('observation size: ', env.observation_space)
     env.close()
 
 
