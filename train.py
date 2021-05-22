@@ -24,7 +24,7 @@ import gym
 
 import kuka_iiwa_insertion
 
-from agent import TRPOAgent
+#from agent import TRPOAgent
 
 
 def main():
@@ -35,7 +35,7 @@ def main():
         obs, rewards, dones, info = env.step(
             env.action_space.sample())  # take a random action
         print('Action: ', env.action_space.sample())
-        print('observation: ', obs)
+        print('observation: ', obs[:3])
         print('observation size: ', env.observation_space)
     env.close()
 
