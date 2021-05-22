@@ -7,20 +7,21 @@ from numpy import sin, cos
 
 from ..robot.kuka_iiwa import KukaIIWA
 
+
 class IiwaInsertionEnv(gym.Env):
-    metadata = {'render.modes': ['human']}  
-  
+    metadata = {'render.modes': ['human']}
+
     def __init__(self):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
-            low= np.array([-0.01]*4),
-            high=np.array([ 0.01]*4))
+            low=np.array([-0.01]*3),
+            high=np.array([0.01]*3))
         self.observation_space = gym.spaces.box.Box(
-            low= np.array([-10]*4),
-            high=np.array([ 10]*4))
+            low=np.array([-10]*6),
+            high=np.array([10]*6))
         self.np_random, _ = gym.utils.seeding.np_random()
-        self.client = p.connect(p.GUI) # DIRECT
-        self.target = np.array([1,1,1,0,0,0])
+        self.client = p.connect(p.GUI)  # DIRECT
+        self.target = np.array([1, 1, 1, 0, 0, 0])
         self.kuka_iiwa = KukaIIWA(self.client)
         self.rendered_img = None
         self.closed = False
@@ -56,9 +57,9 @@ class IiwaInsertionEnv(gym.Env):
 
     def close(self):
         self.closed = True
-        p.disconnect(self.client)    
-    
-    def seed(self, seed=None): 
+        p.disconnect(self.client)
+
+    def seed(self, seed=None):
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
 
@@ -71,10 +72,8 @@ class IiwaInsertionEnv(gym.Env):
         return observation, reward, reward > 100, {}
 
     def calculate_reward(self, observation):
-        return 1/(np.linalg.norm(self.target-np.array(observation))+0.0001)
-
+        return -np.linalg.norm(self.target[:3]-np.array(observation[:3]))
 
     def __del__(self):
         if not self.closed:
             self.close()
-
