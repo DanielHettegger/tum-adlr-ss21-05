@@ -14,17 +14,18 @@ class IiwaInsertionEnv(gym.Env):
     def __init__(self):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
-            low=np.array([-0.01]*3),
-            high=np.array([0.01]*3))
+            low=np.array([-0.01]*4),
+            high=np.array([0.01]*4))
         self.observation_space = gym.spaces.box.Box(
             low=np.array([-10]*6),
             high=np.array([10]*6))
         self.np_random, _ = gym.utils.seeding.np_random()
         self.client = p.connect(p.GUI)  # DIRECT
+        self.closed = False
         self.target = np.array([1, 1, 1, 0, 0, 0])
         self.kuka_iiwa = KukaIIWA(self.client)
         self.rendered_img = None
-        self.closed = False
+        
 
     def reset(self):
         p.resetSimulation(self.client)

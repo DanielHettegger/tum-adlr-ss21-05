@@ -10,10 +10,10 @@ import numpy as np
 #import copy
 import math
 import pybullet_data
+from ..files import get_resource_path
 
 
 class KukaIIWA:
-
   def __init__(self,client, urdfRootPath=pybullet_data.getDataPath(), timeStep=0.01):
     self.client = client
     self.urdfRootPath = urdfRootPath
@@ -42,8 +42,8 @@ class KukaIIWA:
     self.reset()
 
   def reset(self):
-    objects = p.loadSDF(os.path.join(self.urdfRootPath, "kuka_iiwa/model.sdf"), physicsClientId=self.client)
-    self.kukaUid = objects[0]
+    #objects = p.loadSDF(os.path.join(self.urdfRootPath, "kuka_iiwa/model.sdf"), physicsClientId=self.client)
+    self.kukaUid = p.loadURDF(get_resource_path('kuka_iiwa_insertion','robot', 'urdf', 'iiwa14.urdf'), physicsClientId=self.client)
     #for i in range (p.getNumJoints(self.kukaUid)):
     #  print(p.getJointInfo(self.kukaUid,i))
     p.resetBasePositionAndOrientation(self.kukaUid, [-0.100000, 0.000000, 0.070000],
