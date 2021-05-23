@@ -14,22 +14,23 @@ class IiwaInsertionEnv(gym.Env):
     def __init__(self):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
-            low=np.array([-0.01]*4),
-            high=np.array([0.01]*4))
+            low=np.array([-0.01]*3),
+            high=np.array([0.01]*3))
         self.observation_space = gym.spaces.box.Box(
             low=np.array([-10]*6),
             high=np.array([10]*6))
         self.np_random, _ = gym.utils.seeding.np_random()
         self.client = p.connect(p.GUI)  # DIRECT
         self.closed = False
-        self.target = np.array([1, 1, 1, 0, 0, 0])
-        self.kuka_iiwa = KukaIIWA(self.client)
         self.rendered_img = None
-        
+        self.reset()
 
     def reset(self):
         p.resetSimulation(self.client)
         self.kuka_iiwa = KukaIIWA(self.client)
+
+        self.target = np.random.uniform(0.2,0.4,3)
+
         return self.kuka_iiwa.get_observation()
 
     def render(self):
@@ -70,7 +71,7 @@ class IiwaInsertionEnv(gym.Env):
         observation = self.kuka_iiwa.get_observation()
         reward = self.calculate_reward(observation)
 
-        return observation, reward, reward > 100, {}
+        return observation, reward, reward < 0.05, {}
 
     def calculate_reward(self, observation):
         return -np.linalg.norm(self.target[:3]-np.array(observation[:3]))
