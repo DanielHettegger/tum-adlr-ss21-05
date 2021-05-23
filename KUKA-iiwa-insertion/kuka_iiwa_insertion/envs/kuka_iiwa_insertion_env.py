@@ -17,8 +17,8 @@ class IiwaInsertionEnv(gym.Env):
             low=np.array([-0.01]*3),
             high=np.array([0.01]*3))
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-10]*6),
-            high=np.array([10]*6))
+            low=np.array([-10]*3),
+            high=np.array([10]*3))
         self.np_random, _ = gym.utils.seeding.np_random()
         self.client = p.connect(p.GUI)  # DIRECT
         self.closed = False
@@ -68,10 +68,10 @@ class IiwaInsertionEnv(gym.Env):
     def step(self, action):
         self.kuka_iiwa.apply_action(action)
         p.stepSimulation()
-        observation = self.kuka_iiwa.get_observation()
+        observation = self.kuka_iiwa.get_observation()[:3]
         reward = self.calculate_reward(observation)
 
-        return observation, reward, reward < 0.05, {}
+        return self.target[:3]-np.array(observation[:3]), reward, reward < 0.05, {}
 
     def calculate_reward(self, observation):
         return -np.linalg.norm(self.target[:3]-np.array(observation[:3]))
