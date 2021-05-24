@@ -18,7 +18,7 @@ from scipy.spatial.transform import Rotation as R
 
 
 class KukaIIWA:
-  def __init__(self,client, urdfRootPath=pybullet_data.getDataPath(), timeStep=0.01):
+  def __init__(self,client):
     self.client = client
 
     self.ee_index = 8
@@ -54,8 +54,8 @@ class KukaIIWA:
     self.rs = 2
     self.tr = 0.0
 
-    self.target_position =    [0.4, 0, 0.65]
-    self.target_orientation = [-pi, 0, pi]
+    self.target_position =    [0.7, 0, 0.4]
+    self.target_orientation = [pi, 0, pi]
 
     
     q = self.inverse_kinematics(self.target_position, self.target_orientation)
@@ -148,8 +148,9 @@ class KukaIIWA:
     if np.sign(q[1]) != rs2:
       q[1] = - np.arccos(z_des / xz) - np.arctan2(x, z)
     if np.sign(q[1]) != rs2:
-      print('Joint 2 has no solution for required {} sign.'.format('negative' if rs2 == -1 else 'positive'))
-      return False
+      #print('Joint 2 has no solution for required {} sign.'.format('negative' if rs2 == -1 else 'positive'))
+      #return False
+      pass
 
     x = self.l24*sin(q[1]) + (cos(q[3])*sin(q[1]) - (cos(q[1])*cos(q[2]))*sin(q[3]))*self.l46
 

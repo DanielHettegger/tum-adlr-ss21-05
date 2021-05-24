@@ -14,11 +14,11 @@ class IiwaInsertionEnv(gym.Env):
     def __init__(self):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
-            low=np.array([-0.01]*3),
-            high=np.array([0.01]*3))
+            low=np.array([-1]*3),
+            high=np.array([1]*3))
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-10]*3),
-            high=np.array([10]*3))
+            low=np.array([-1]*3),
+            high=np.array([1]*3))
         self.np_random, _ = gym.utils.seeding.np_random()
         self.client = p.connect(p.GUI)  # DIRECT
         self.closed = False
@@ -29,9 +29,23 @@ class IiwaInsertionEnv(gym.Env):
         p.resetSimulation(self.client)
         self.kuka_iiwa = KukaIIWA(self.client)
 
-        self.target = np.random.uniform(0.2,0.4,3)
+        self._generate_target()
+        self.action_step_size =  np.random.uniform(0.0005,0.0015)
 
         return self.kuka_iiwa.get_observation()
+    
+    def _generate_target(self):
+        while True:
+            distance = np.random.uniform(0.4,0.7)
+            angle = np.random.uniform(-np.pi/2, np.pi/2)
+            height = np.random.uniform(0.2,0.6)
+            
+
+            position_canidate = [distance * np.cos(angle), distance * np.sin(angle), height]
+            if self.kuka_iiwa.inverse_kinematics(position_canidate, [np.pi, 0, np.pi]):
+                break
+
+        self.target_position = position_canidate
 
     def render(self):
         if self.rendered_img is None:
@@ -43,18 +57,19 @@ class IiwaInsertionEnv(gym.Env):
                                                    nearVal=0.01, farVal=100)
         pos, ori = [list(l) for l in
                     p.getBasePositionAndOrientation(kuka_id, client_id)]
-        pos[2] = 0.5
-        pos[0] = -0.7
 
         # Rotate camera direction
         rot_mat = np.array(p.getMatrixFromQuaternion(ori)).reshape(3, 3)
         camera_vec = np.matmul(rot_mat, [1, 0, 0])
-        up_vec = np.matmul(rot_mat, np.array([1, 0, 1]))
+        up_vec = [0,0,1]#np.matmul(rot_mat, np.array([1, 0, 1]))
         view_matrix = p.computeViewMatrix(pos, pos + camera_vec, up_vec)
 
         # Display image
-        frame = p.getCameraImage(800, 800, view_matrix, proj_matrix)[2]
+        _,_,frame,_,_ = p.getCameraImage(800, 800)#, view_matrix, proj_matrix)[2]
         frame = np.reshape(frame, (800, 800, 4))
+        self.rendered_img.set_data(frame)
+        plt.draw()
+        plt.pause(.00001)
         return frame
 
     def close(self):
@@ -66,15 +81,16 @@ class IiwaInsertionEnv(gym.Env):
         return [seed]
 
     def step(self, action):
+        action = [self.action_step_size *  a for a in action]
         self.kuka_iiwa.apply_action(action)
         p.stepSimulation()
         observation = self.kuka_iiwa.get_observation()[:3]
         reward = self.calculate_reward(observation)
 
-        return self.target[:3]-np.array(observation[:3]), reward, reward < 0.05, {}
+        return self.target_position[:3]-np.array(observation[:3]), reward, reward > -0.05, {}
 
     def calculate_reward(self, observation):
-        return -np.linalg.norm(self.target[:3]-np.array(observation[:3]))
+        return -np.linalg.norm(self.target_position[:3]-np.array(observation[:3]))
 
     def __del__(self):
         if not self.closed:
