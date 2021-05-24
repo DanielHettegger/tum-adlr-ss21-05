@@ -83,16 +83,18 @@ class KukaIIWA:
 
     return observation
 
-  def apply_action(self, action):        
-    self.target_position[0] += action[0]
-    self.target_position[1] += action[1]
-    self.target_position[2] += action[2]
+  def apply_action(self, action):
+    target_candidate = self.target_position        
+    target_candidate[0] += action[0]
+    target_candidate[1] += action[1]
+    target_candidate[2] += action[2]
     #self.target_orientation[2] += action[3]
 
     
-    q = self.inverse_kinematics(self.target_position, self.target_orientation) 
+    q = self.inverse_kinematics(target_candidate, self.target_orientation) 
     if q:
       self.set_joint_targets(q)
+      self.target_position = target_candidate
 
   def set_joint_targets(self, q):
     for i, qi in enumerate(q):
@@ -139,7 +141,7 @@ class KukaIIWA:
     s = norm(p260)
 
     if s > self.l24 + self.l46:
-      print('invalid pose. L26 distance:{}'.format(s))
+      #print('invalid pose. L26 distance:{}'.format(s))
       return False
 
     q[3] = rs4 * (np.pi - np.arccos((self.l24**2 + self.l46**2 - s**2)/(2*self.l24 * self.l46)))
@@ -190,8 +192,8 @@ class KukaIIWA:
         for i, ti in enumerate(q):
           limit = self.joint_limits[self.joint_names[i]]
           if not (limit['lower'] <= ti <= limit['upper']):
-            print("{} with value {} is not within the joint limit range: {},{}".format(
-                self.joint_names[i], ti, limit['lower'], limit['upper']))
+            #print("{} with value {} is not within the joint limit range: {},{}".format(
+                #self.joint_names[i], ti, limit['lower'], limit['upper']))
             limit_exceeded = True
         return not limit_exceeded
 
