@@ -9,7 +9,7 @@ observation = [0,0,0]
 for i in range(100000):
     #env.render()
     action = observation
-    max_action = np.max(action)
+    max_action = np.max(np.abs(action))
     if max_action > 0.01:
         action = [a / max_action for a in action] 
          
