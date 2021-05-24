@@ -60,7 +60,7 @@ class KukaIIWA:
     
     q = self.inverse_kinematics(self.target_position, self.target_orientation)
     if q:
-      self.set_joint_targets(q)
+      self.force_joint_targets(q)
   
   def get_ids(self):
     return self.client, self.kuka_uid
@@ -105,6 +105,14 @@ class KukaIIWA:
                               #maxVelocity=self.maxVelocity,
                               positionGain=0.3,
                               velocityGain=1)
+  
+  def force_joint_targets(self, q):
+    for i, qi in enumerate(q):
+      p.resetJointState(bodyUniqueId= self.kuka_uid,
+                        jointIndex= i+1,
+                        targetValue= qi,
+                        physicsClientId= self.client)
+
 
   def inverse_kinematics(self, position, orientation, redundancy=None, redundancy_status=None):
     if redundancy_status is not None:

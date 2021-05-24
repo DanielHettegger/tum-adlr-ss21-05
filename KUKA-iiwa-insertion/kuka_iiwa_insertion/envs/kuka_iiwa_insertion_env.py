@@ -22,13 +22,14 @@ class IiwaInsertionEnv(gym.Env):
         self.np_random, _ = gym.utils.seeding.np_random()
         self.client = p.connect(p.GUI)  # DIRECT
         self.closed = False
+        self.kuka_iiwa = KukaIIWA(self.client)
         self.rendered_img = None
         self.reset()
 
     def reset(self):
-        p.resetSimulation(self.client)
-        self.kuka_iiwa = KukaIIWA(self.client)
-
+        #p.resetSimulation(self.client)
+        self.kuka_iiwa.reset()
+        
         self._generate_target()
         self.action_step_size =  np.random.uniform(0.0005,0.0015)
 
