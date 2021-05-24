@@ -20,20 +20,11 @@ class IiwaInsertionEnv(gym.Env):
             low=np.array([-1]*3),
             high=np.array([1]*3))
         self.np_random, _ = gym.utils.seeding.np_random()
-        self.client = p.connect(p.GUI)  # DIRECT
+        self.client = p.connect(p.DIRECT)  # DIRECT
         self.closed = False
         self.kuka_iiwa = KukaIIWA(self.client)
         self.rendered_img = None
         self.reset()
-
-    def reset(self):
-        #p.resetSimulation(self.client)
-        self.kuka_iiwa.reset()
-        
-        self._generate_target()
-        self.action_step_size =  np.random.uniform(0.0005,0.0015)
-
-        return self.kuka_iiwa.get_observation()
     
     def _generate_target(self):
         while True:
@@ -47,6 +38,15 @@ class IiwaInsertionEnv(gym.Env):
                 break
 
         self.target_position = position_canidate
+
+    def reset(self):
+        #p.resetSimulation(self.client)
+        self.kuka_iiwa.reset()
+        
+        self._generate_target()
+        self.action_step_size =  np.random.uniform(0.0005,0.0015)
+
+        return self.kuka_iiwa.get_observation()[:3]
 
     def render(self):
         if self.rendered_img is None:
@@ -73,7 +73,7 @@ class IiwaInsertionEnv(gym.Env):
         plt.pause(.00001)
         return frame
 
-    def close(self):
+    def close(self): 
         self.closed = True
         p.disconnect(self.client)
 
@@ -88,7 +88,7 @@ class IiwaInsertionEnv(gym.Env):
         observation = self.kuka_iiwa.get_observation()[:3]
         reward = self.calculate_reward(observation)
 
-        return self.target_position[:3]-np.array(observation[:3]), reward, reward > -0.05, {}
+        return np.array(self.target_position[:3])-np.array(observation[:3]), reward, reward > -0.05, {}
 
     def calculate_reward(self, observation):
         return -np.linalg.norm(self.target_position[:3]-np.array(observation[:3]))
