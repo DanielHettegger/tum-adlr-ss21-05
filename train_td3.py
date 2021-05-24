@@ -8,7 +8,7 @@ from stable_baselines3.td3.policies import MlpPolicy
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise
 
-env = gym.make('kuka_iiwa_insertion-v0')
+env = gym.make('kuka_iiwa_insertion-v0', use_gui=False)
 
 # The noise objects for TD3
 n_actions = env.action_space.shape[-1]
@@ -22,8 +22,11 @@ del model # remove to demonstrate saving and loading
 
 model = TD3.load("kuka_iiwa_insertion-v0")
 
+env = gym.make('kuka_iiwa_insertion-v0', use_gui=True)
+
 obs = env.reset()
 while True:
     action, _states = model.predict(obs)
     obs, rewards, dones, info = env.step(action)
-    env.render()
+    print(obs, rewards, dones, info)
+    #env.render()
