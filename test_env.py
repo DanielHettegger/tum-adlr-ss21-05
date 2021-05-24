@@ -3,7 +3,7 @@ import numpy as np
 import kuka_iiwa_insertion
 
 
-env = gym.make('kuka_iiwa_insertion-v0')
+env = gym.make('kuka_iiwa_insertion-v0', use_gui=True)
 #env.reset()
 observation = [0,0,0]
 for i in range(100000):

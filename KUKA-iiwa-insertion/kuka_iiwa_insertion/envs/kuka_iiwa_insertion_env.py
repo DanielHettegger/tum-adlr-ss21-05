@@ -11,7 +11,7 @@ from ..robot.kuka_iiwa import KukaIIWA
 class IiwaInsertionEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self, use_gui=False):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
@@ -19,13 +19,17 @@ class IiwaInsertionEnv(gym.Env):
         self.observation_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
             high=np.array([1]*3))
-        
+
         self.max_observation = 2.0
         self.target_size = 0.05
 
         self.np_random, _ = gym.utils.seeding.np_random()
 
-        self.client = p.connect(p.DIRECT)  # DIRECT
+        if use_gui:
+            self.client = p.connect(p.GUI) 
+        else:
+            self.client = p.connect(p.DIRECT)
+        
         self.closed = False
         self.kuka_iiwa = KukaIIWA(self.client)
         self.rendered_img = None
