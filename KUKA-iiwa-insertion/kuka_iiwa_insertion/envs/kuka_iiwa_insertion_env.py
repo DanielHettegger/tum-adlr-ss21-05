@@ -11,7 +11,7 @@ from ..robot.kuka_iiwa import KukaIIWA
 class IiwaInsertionEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, use_gui=False):
+    def __init__(self, max_steps=1000, use_gui=False):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
@@ -22,6 +22,8 @@ class IiwaInsertionEnv(gym.Env):
 
         self.max_observation = 2.0
         self.target_size = 0.05
+
+        self.max_steps = max_steps
 
         self.np_random, _ = gym.utils.seeding.np_random()
 
@@ -53,6 +55,7 @@ class IiwaInsertionEnv(gym.Env):
         
         self._generate_target_position()
         self.action_step_size =  np.random.uniform(0.0005,0.0015)
+        self.steps = 0
 
         return self.get_observation()
 
@@ -90,6 +93,7 @@ class IiwaInsertionEnv(gym.Env):
         return [seed]
 
     def step(self, action):
+        self.steps += 1
         action = [self.action_step_size *  a for a in action]
         self.kuka_iiwa.apply_action(action)
         p.stepSimulation()
@@ -106,7 +110,7 @@ class IiwaInsertionEnv(gym.Env):
         return self.target_position - observation
     
     def is_done(self,observation):
-        return (np.linalg.norm(observation) < self.target_size).item()
+        return (np.linalg.norm(observation) < self.target_size).item() or self.steps > self.max_steps
 
     def __del__(self):
         if not self.closed:
