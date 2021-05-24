@@ -54,7 +54,7 @@ class IiwaInsertionEnv(gym.Env):
         self._generate_target_position()
         self.action_step_size =  np.random.uniform(0.0005,0.0015)
 
-        return self.kuka_iiwa.get_observation()[:3]
+        return self.get_observation()
 
     def render(self):
         if self.rendered_img is None:
@@ -106,7 +106,7 @@ class IiwaInsertionEnv(gym.Env):
         return self.target_position - observation
     
     def is_done(self,observation):
-        return np.linalg.norm(observation) < self.target_size
+        return (np.linalg.norm(observation) < self.target_size).item()
 
     def __del__(self):
         if not self.closed:
