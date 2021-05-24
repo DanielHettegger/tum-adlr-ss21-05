@@ -19,31 +19,35 @@ class IiwaInsertionEnv(gym.Env):
         self.observation_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
             high=np.array([1]*3))
+        
+        self.max_observation = 2.0
+        self.target_size = 0.05
+
         self.np_random, _ = gym.utils.seeding.np_random()
+
         self.client = p.connect(p.DIRECT)  # DIRECT
         self.closed = False
         self.kuka_iiwa = KukaIIWA(self.client)
         self.rendered_img = None
         self.reset()
     
-    def _generate_target(self):
+    def _generate_target_position(self):
         while True:
             distance = np.random.uniform(0.4,0.7)
             angle = np.random.uniform(-np.pi/2, np.pi/2)
             height = np.random.uniform(0.2,0.6)
             
-
             position_canidate = [distance * np.cos(angle), distance * np.sin(angle), height]
             if self.kuka_iiwa.inverse_kinematics(position_canidate, [np.pi, 0, np.pi]):
                 break
 
-        self.target_position = position_canidate
+        self.target_position = np.array(position_canidate)
 
     def reset(self):
         #p.resetSimulation(self.client)
         self.kuka_iiwa.reset()
         
-        self._generate_target()
+        self._generate_target_position()
         self.action_step_size =  np.random.uniform(0.0005,0.0015)
 
         return self.kuka_iiwa.get_observation()[:3]
@@ -85,13 +89,20 @@ class IiwaInsertionEnv(gym.Env):
         action = [self.action_step_size *  a for a in action]
         self.kuka_iiwa.apply_action(action)
         p.stepSimulation()
-        observation = self.kuka_iiwa.get_observation()[:3]
+        observation = self.get_observation()
         reward = self.calculate_reward(observation)
 
-        return np.array(self.target_position[:3])-np.array(observation[:3]), reward, reward > -0.05, {}
+        return observation / self.max_observation, reward, self.is_done(observation), {}
 
     def calculate_reward(self, observation):
-        return -np.linalg.norm(self.target_position[:3]-np.array(observation[:3]))
+        return -np.linalg.norm(observation)
+
+    def get_observation(self):
+        observation = np.array(self.kuka_iiwa.get_observation()[:3])
+        return self.target_position - observation
+    
+    def is_done(self,observation):
+        return np.linalg.norm(observation) < self.target_size
 
     def __del__(self):
         if not self.closed:
