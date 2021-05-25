@@ -49,7 +49,10 @@ class IiwaInsertionEnv(gym.Env):
                 break
 
         self.target_position = np.array(position_canidate)
-        if self.use_gui:
+        self._update_visual_target()
+
+    def _update_visual_target(self):
+         if self.use_gui:
             if self.visual_target is None:
                 vuid = p.createVisualShape(p.GEOM_SPHERE, 
                     radius=self.target_size, 
@@ -64,7 +67,6 @@ class IiwaInsertionEnv(gym.Env):
                     posObj=self.target_position,
                     ornObj=[0,0,0,1],
                     physicsClientId=self.client)
-
 
     def reset(self):
         #p.resetSimulation(self.client)
