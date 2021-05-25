@@ -27,12 +27,13 @@ class IiwaInsertionEnv(gym.Env):
 
         self.np_random, _ = gym.utils.seeding.np_random()
 
+        self.use_gui = use_gui
         if use_gui:
             self.client = p.connect(p.GUI) 
         else:
             self.client = p.connect(p.DIRECT)
-        
         self.closed = False
+        self.visual_target = None
         self.kuka_iiwa = KukaIIWA(self.client)
         self.rendered_img = None
         self.reset()
@@ -48,6 +49,22 @@ class IiwaInsertionEnv(gym.Env):
                 break
 
         self.target_position = np.array(position_canidate)
+        if self.use_gui:
+            if self.visual_target is None:
+                vuid = p.createVisualShape(p.GEOM_SPHERE, 
+                    radius=self.target_size, 
+                    physicsClientId=self.client,
+                    rgbaColor=[1, 0, 0, 0.5],)
+                self.visual_target = p.createMultiBody(baseMass=0,
+                    baseVisualShapeIndex=vuid, 
+                    basePosition=self.target_position, 
+                    physicsClientId=self.client)
+            else:
+                p.resetBasePositionAndOrientation(self.visual_target,
+                    posObj=self.target_position,
+                    ornObj=[0,0,0,1],
+                    physicsClientId=self.client)
+
 
     def reset(self):
         #p.resetSimulation(self.client)
