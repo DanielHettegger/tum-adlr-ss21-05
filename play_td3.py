@@ -10,7 +10,7 @@ from stable_baselines3.common.noise import NormalActionNoise, OrnsteinUhlenbeckA
 
 
 def play():
-    model = TD3.load("kuka_iiwa_insertion-v0")
+    model = TD3.load("models/kuka_iiwa_insertion-v0")
 
     env = gym.make('kuka_iiwa_insertion-v0', use_gui=True)
 
@@ -20,10 +20,10 @@ def play():
         i += 1
         action, _states = model.predict(obs)
         obs, rewards, dones, info = env.step(action)
-        if i % 100 == 0: 
+        if i % 100 == 0 or dones: 
             print(obs, rewards, dones, info)
         if dones:
-            print("="*20 + " reset " + "="*20)
+            print("="*20 + " RESET " + "="*20)
             env.reset()
         #env.render()
 
