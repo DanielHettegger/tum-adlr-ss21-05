@@ -113,8 +113,8 @@ class IiwaInsertionEnv(gym.Env):
 
     def step(self, action):
         self.steps += 1
-        action = [self.action_step_size *  a for a in action]
-        self.kuka_iiwa.apply_action(action)
+        action = (self.action_step_size * np.array(action))
+        self.kuka_iiwa.apply_action(action, self.observation_position)
         p.stepSimulation()
         observation = self.get_observation()
         reward = self.calculate_reward(observation)
@@ -125,8 +125,9 @@ class IiwaInsertionEnv(gym.Env):
         return -np.linalg.norm(observation)
 
     def get_observation(self):
-        observation = np.array(self.kuka_iiwa.get_observation()[:3])
-        return self.target_position - observation
+        current_position = np.array(self.kuka_iiwa.get_observation()[:3])
+        self.observation_position = current_position
+        return self.target_position - current_position
     
     def is_done(self,observation):
         return (np.linalg.norm(observation) < self.target_size).item() or self.steps > self.max_steps

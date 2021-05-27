@@ -83,8 +83,12 @@ class KukaIIWA:
 
     return observation
 
-  def apply_action(self, action):
-    target_candidate = self.target_position        
+  def apply_action(self, action, position = None):
+    if position is None:
+      target_candidate = self.target_position
+    else:
+      target_candidate = position
+              
     target_candidate[0] += action[0]
     target_candidate[1] += action[1]
     target_candidate[2] += action[2]
