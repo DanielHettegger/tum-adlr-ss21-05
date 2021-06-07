@@ -5,20 +5,24 @@ import os, inspect
 #parentdir = os.path.dirname(os.path.dirname(currentdir))
 #os.sys.path.insert(0, parentdir)
 
+from pybullet_utils import bullet_client as bc
+from pybullet_utils import urdfEditor as ed
 import pybullet as p
+import pybullet_data
+
+
 import numpy as np
 from numpy import pi, sqrt, cos, sin, arctan2, array, matrix
 from numpy.linalg import norm
 #import copy
 import math
-import pybullet_data
 from ..files import get_resource_path
 
 from scipy.spatial.transform import Rotation as R
 
 
 class KukaIIWA:
-  def __init__(self,client):
+  def __init__(self,client, reset_position = [0.6, 0, 0.4], tool=None):
     self.client = client
 
     self.ee_index = 8
@@ -26,9 +30,14 @@ class KukaIIWA:
     self.l02 = 0.36
     self.l24 = 0.42
     self.l46 = 0.4
-    self.l6E = 0.126 + 0.026
+    self.l6E = 0.126 #+ 0.026
 
     self.robot_name = 'iiwa'
+
+    self.max_force = 800
+    self.max_velocity = 0.1
+
+    self.reset_position = reset_position
 
     self.joint_names = ['{}_joint_1'.format(self.robot_name),
                         '{}_joint_2'.format(self.robot_name),
@@ -46,15 +55,54 @@ class KukaIIWA:
                          '{}_joint_6'.format(self.robot_name):{'lower': np.deg2rad(-120.0), 'upper':np.deg2rad(120.0)},
                          '{}_joint_7'.format(self.robot_name):{'lower': np.deg2rad(-175.0), 'upper':np.deg2rad(175.0)},
                          }
+    self.tool = tool
+    if tool is None:
+      self.kuka_uid = p.loadURDF(get_resource_path('kuka_iiwa_insertion','robot', 'urdf', 'iiwa14.urdf'), physicsClientId=self.client)
+    elif tool is "square":
+      self._load_with_tool(tool)
+    else:
+      raise NotImplementedError("This tool has not been implemented")
 
-    self.kuka_uid = p.loadURDF(get_resource_path('kuka_iiwa_insertion','robot', 'urdf', 'iiwa14.urdf'), physicsClientId=self.client)
+    #self.maxForceSlider = p.addUserDebugParameter("maxForce", 0, 1600, 800)
     self.reset()
+
+  def _load_with_tool(self, tool):
+    
+    p0 = bc.BulletClient(connection_mode=p.DIRECT)
+    p1 = bc.BulletClient(connection_mode=p.DIRECT)
+
+    kuka = p0.loadURDF(get_resource_path('kuka_iiwa_insertion','robot', 'urdf', 'iiwa14.urdf'))
+    if tool is "square":
+      tool = p1.loadURDF(get_resource_path('kuka_iiwa_insertion','models', 'square10x10', 'tool9x9.urdf'))
+
+    ed0 = ed.UrdfEditor()
+    ed0.initializeFromBulletBody(kuka, p0._client)
+    ed1 = ed.UrdfEditor()
+    ed1.initializeFromBulletBody(tool, p1._client)
+
+    jointPivotXYZInParent = [0, 0, 0.026]
+    jointPivotRPYInParent = [0, 0, 0]
+
+    jointPivotXYZInChild = [0, 0, 0]
+    jointPivotRPYInChild = [0, 0, 0]
+
+    newjoint = ed0.joinUrdf(ed1, self.ee_index, jointPivotXYZInParent, jointPivotRPYInParent,
+                            jointPivotXYZInChild, jointPivotRPYInChild, p0._client, p1._client)
+
+    newjoint.joint_type = p.JOINT_FIXED
+    
+    self.kuka_uid = ed0.createMultiBody([0, 0, 0], [0,0,0,1], self.client)
+
+    
+
+
+
 
   def reset(self):
     self.rs = 2
     self.tr = 0.0
 
-    self.target_position =    [0.7, 0, 0.4]
+    self.target_position =    self.reset_position
     self.target_orientation = [pi, 0, pi]
 
     
@@ -99,6 +147,7 @@ class KukaIIWA:
     if q:
       self.set_joint_targets(q)
       self.target_position = target_candidate
+      #print("Target position: {}\nActions: {}".format(target_candidate, action))
 
   def set_joint_targets(self, q):
     for i, qi in enumerate(q):
@@ -107,8 +156,8 @@ class KukaIIWA:
                               controlMode= p.POSITION_CONTROL,
                               targetPosition= qi,
                               targetVelocity=0,
-                              #force=self.maxForce,
-                              #maxVelocity=self.maxVelocity,
+                              force=self.max_force,
+                              maxVelocity=self.max_velocity,
                               positionGain=0.3,
                               velocityGain=1)
   

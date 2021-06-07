@@ -1,17 +1,19 @@
 import pybullet as p
+import pybullet_data
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
 import time
 from numpy import sin, cos
 
+from ..files import get_resource_path
 from ..robot.kuka_iiwa import KukaIIWA
 
 
 class IiwaInsertionEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, max_steps=1000, use_gui=False):
+    def __init__(self,  steps_per_action=1, max_steps=1000, use_gui=False,):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
@@ -23,7 +25,12 @@ class IiwaInsertionEnv(gym.Env):
         self.max_observation = 2.0
         self.target_size = 0.05
 
+        self.base_position = [0.6, 0.0, 0.0]
+        self.tool_reset_position = [0.6, 0, 0.4]
+        self.kuka_reset_position = [0.6, 0, 0.4]
+
         self.max_steps = max_steps
+        self.steps_per_action = steps_per_action
 
         self.np_random, _ = gym.utils.seeding.np_random()
 
@@ -34,7 +41,8 @@ class IiwaInsertionEnv(gym.Env):
             self.client = p.connect(p.DIRECT)
         self.closed = False
         self.visual_target = None
-        self.kuka_iiwa = KukaIIWA(self.client)
+        self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool="square")
+        self._setup_task()
         self.rendered_img = None
         self.reset()
     
@@ -48,8 +56,47 @@ class IiwaInsertionEnv(gym.Env):
             if self.kuka_iiwa.inverse_kinematics(position_canidate, [np.pi, 0, np.pi]):
                 break
 
-        self.target_position = np.array(position_canidate)
+        self.target_position = np.array([0.6,0.0,0.05])#position_canidate)
         self._update_visual_target()
+
+    def _setup_task(self):
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
+        self.ground_plane_id = p.loadURDF("plane.urdf")
+        self.base_id = p.loadURDF(get_resource_path('kuka_iiwa_insertion','models', 'square10x10', 'base10x10.urdf'),
+                    basePosition=self.base_position,
+                    physicsClientId=self.client)
+        
+        '''self.tool_id = p.loadURDF(get_resource_path('kuka_iiwa_insertion','models', 'square10x10', 'tool9x9.urdf'),
+                    basePosition=self.tool_reset_position,
+                    baseOrientation=[0,1,0,0],
+                    physicsClientId=self.client)
+
+        p.setCollisionFilterPair(
+            self.kuka_iiwa.kuka_uid,
+            self.tool_id,
+            self.kuka_iiwa.ee_index,
+            0,
+            0,
+            self.client
+        ) 
+
+        c = p.createConstraint(
+            parentBodyUniqueId = self.kuka_iiwa.kuka_uid,
+            parentLinkIndex = self.kuka_iiwa.ee_index,
+            childBodyUniqueId = self.tool_id,
+            childLinkIndex = -1,
+            jointType = p.JOINT_FIXED,
+            jointAxis = [1.0,1.0,1.0],
+            parentFramePosition = [0.0,0.0,0.0],
+            childFramePosition = [0.0,0.0,0],
+            parentFrameOrientation = [0.0,0.0,0,1.0],
+            childFrameOrientation = [0.0,0.0,0,1.0],
+            physicsClientId = self.client
+            )
+
+        #p.changeConstraint(c, maxForce=10)'''
+
+        
 
     def _update_visual_target(self):
          if self.use_gui:
@@ -70,6 +117,7 @@ class IiwaInsertionEnv(gym.Env):
 
     def reset(self):
         #p.resetSimulation(self.client)
+        #p.resetBasePositionAndOrientation(self.tool_id, self.tool_reset_position, [0,1,0,0])
         self.kuka_iiwa.reset()
         
         self._generate_target_position()
@@ -115,10 +163,12 @@ class IiwaInsertionEnv(gym.Env):
         self.steps += 1
         action = (self.action_step_size * np.array(action))
         self.kuka_iiwa.apply_action(action, self.observation_position)
-        p.stepSimulation()
+        for i in range (self.steps_per_action):
+            p.stepSimulation()
         observation = self.get_observation()
         reward = self.calculate_reward(observation)
 
+        #print(self.steps, self.is_done(observation))
         return observation / self.max_observation, reward, self.is_done(observation), {}
 
     def calculate_reward(self, observation):
