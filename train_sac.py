@@ -105,7 +105,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         """
         dict = get_log_dict()
         actor_loss = dict.get("train/actor_loss")
-        critic_loss = dict.get("Train/critic_loss")
+        critic_loss = dict.get("train/critic_loss")
         if actor_loss:
             wandb.log({"actor_loss": actor_loss})
         if critic_loss:
