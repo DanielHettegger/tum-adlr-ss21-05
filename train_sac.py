@@ -71,8 +71,9 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
     def _on_step(self) -> bool:
         if self.n_calls % self.check_log == 0:
             # Retrieve training reward
+            x, y = ts2xy(load_results(self.log_dir), 'timesteps')
             if len(x) > 0:
-                x, y = ts2xy(load_results(self.log_dir), 'timesteps')
+                
                 wandb.log({"reward": y[-1]})
 
 
