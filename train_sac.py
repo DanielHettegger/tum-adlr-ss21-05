@@ -20,7 +20,7 @@ import wandb
 def main():
     # 1. Start a W&B run
     wandb.init(project='pearl', entity='adlr-ss-21-05')
-    print(wandb.run.name)
+    print("wandb name: ", wandb.run.name)
     log_dir = "tmp/"
     os.makedirs(log_dir, exist_ok=True)
     callback = SaveOnBestTrainingRewardCallback(
@@ -105,7 +105,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         """
         dict = get_log_dict()
         actor_loss = dict.get("train/actor_loss")
-        critic_loss = dict.get("Train\critic_loss")
+        critic_loss = dict.get("Train/critic_loss")
         if actor_loss:
             wandb.log({"actor_loss": actor_loss})
         if critic_loss:
