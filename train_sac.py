@@ -20,6 +20,7 @@ import wandb
 def main():
     # 1. Start a W&B run
     wandb.init(project='pearl', entity='adlr-ss-21-05')
+    print(wandb.run.name)
     log_dir = "tmp/"
     os.makedirs(log_dir, exist_ok=True)
     callback = SaveOnBestTrainingRewardCallback(
@@ -71,12 +72,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
             os.makedirs(self.save_path, exist_ok=True)
 
     def _on_step(self) -> bool:
-        if self.n_calls % self.check_log == 0:
-            # Retrieve training reward
-            x, y = ts2xy(load_results(self.log_dir), 'timesteps')
-            if len(x) > 0:
-                
-                wandb.log({"reward": y[-1]})
+            
 
 
         if self.n_calls % self.check_freq == 0:
@@ -109,8 +105,17 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         """
         dict = get_log_dict()
         actor_loss = dict.get("train/actor_loss")
+        critic_loss = dict.get("Train\critic_loss")
         if actor_loss:
             wandb.log({"actor_loss": actor_loss})
+        if critic_loss:
+            wandb.log({"critic_loss": critic_loss})
+
+        x, y = ts2xy(load_results(self.log_dir), 'timesteps')
+        if len(x) > 0:
+            mean_reward = np.mean(y[-100:])
+            wandb.log({"episode_reward": y[-1]})
+            wandb.log({"mean_episode_reward": y[-1]})
         
 
 
