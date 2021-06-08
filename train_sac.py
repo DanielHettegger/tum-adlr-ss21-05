@@ -24,16 +24,12 @@ def main():
     log_dir = "tmp/"
     os.makedirs(log_dir, exist_ok=True)
     callback = SaveOnBestTrainingRewardCallback(
-        check_freq=1000,check_log=1, log_dir=log_dir)
+        check_freq=1000,check_log=1, log_dir=log_dir, model_name=wandb.run.name)
 
     env = gym.make('kuka_iiwa_insertion-v0', use_gui=False)
     env = Monitor(env, log_dir)
 
-    try:
-        model = SAC.load("models/kuka_iiwa_insertion-v0_sac_best_model",
-                         env, verbose=1, learning_starts=1000)
-    except:
-        model = SAC("MlpPolicy", env, verbose=1)
+    model = SAC("MlpPolicy", env, verbose=1)
 
     i = 0
     save_interval = 10000
@@ -41,7 +37,7 @@ def main():
         i += save_interval
         model.learn(total_timesteps=save_interval, callback=callback)
         print("saving model {}".format(i))
-        model.save("models/kuka_iiwa_insertion-v0_sac")
+        model.save("models/"+wandb.run.name)
         #plot_results([log_dir], save_interval, results_plotter.X_TIMESTEPS, "SAC Insertion")
         # plt.show()
 
@@ -59,12 +55,13 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
     :param verbose: (int)
     """
 
-    def __init__(self, check_freq: int, check_log: int, log_dir: str, verbose=1):
+    def __init__(self, check_freq: int, check_log: int, log_dir: str, model_name: str, verbose=1):
         super(SaveOnBestTrainingRewardCallback, self).__init__(verbose)
         self.check_freq = check_freq
         self.check_log = check_log
         self.log_dir = log_dir
         self.save_path = 'models'
+        self.model_name = model_name
         self.best_mean_reward = -np.inf
 
     def _init_callback(self) -> None:
@@ -92,7 +89,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                     if self.verbose > 0:
                         print("Saving new best model to {}".format(self.save_path))
                     self.model.save(os.path.join(
-                        self.save_path, 'kuka_iiwa_insertion-v0_sac_best_model'))
+                        self.save_path, self.model_name + '_best_model'))
         
 
         return True
