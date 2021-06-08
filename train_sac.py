@@ -32,12 +32,11 @@ def main():
     model = SAC("MlpPolicy", env, verbose=1)
 
     i = 0
-    save_interval = 10000
+    save_interval = 1000000
     while True:
         i += save_interval
         model.learn(total_timesteps=save_interval, callback=callback)
-        print("saving model {}".format(i))
-        model.save("models/"+wandb.run.name)
+        #print("saving model {}".format(i))
         #plot_results([log_dir], save_interval, results_plotter.X_TIMESTEPS, "SAC Insertion")
         # plt.show()
 
@@ -101,16 +100,20 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         dict = get_log_dict()
         actor_loss = dict.get("train/actor_loss")
         critic_loss = dict.get("train/critic_loss")
+        ep_len_mean = dict.get("rollout/ep_len_mean")
+        ep_rew_mean = dict.get("rollout/ep_rew_mean")
         if actor_loss:
             wandb.log({"actor_loss": actor_loss})
         if critic_loss:
             wandb.log({"critic_loss": critic_loss})
+        if ep_len_mean:
+            wandb.log({"ep_len_mean": ep_len_mean})
 
         x, y = ts2xy(load_results(self.log_dir), 'timesteps')
         if len(x) > 0:
-            mean_reward = np.mean(y[-100:])
             wandb.log({"episode_reward": y[-1]})
-            wandb.log({"mean_episode_reward": y[-1]})
+        if ep_rew_mean:
+            wandb.log({"mean_episode_reward": ep_rew_mean})
         
 
 
