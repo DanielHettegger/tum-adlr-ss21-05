@@ -18,6 +18,8 @@ import wandb
 
 
 def main():
+    # 1. Start a W&B run
+    wandb.init(project='pearl', entity='adlr-ss-21-05')
     log_dir = "tmp/"
     os.makedirs(log_dir, exist_ok=True)
     callback = SaveOnBestTrainingRewardCallback(
