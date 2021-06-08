@@ -156,8 +156,8 @@ class KukaIIWA:
                               controlMode= p.POSITION_CONTROL,
                               targetPosition= qi,
                               targetVelocity=0,
-                              force=self.max_force,
-                              maxVelocity=self.max_velocity,
+                              #force=self.max_force,
+                              #maxVelocity=self.max_velocity,
                               positionGain=0.3,
                               velocityGain=1)
   

@@ -7,9 +7,9 @@ from stable_baselines3 import SAC
 
 
 def play():
-    model = SAC.load("models/kuka_iiwa_insertion-v0")
+    model = SAC.load("models/kuka_iiwa_insertion-v0_sac")
 
-    env = gym.make('kuka_iiwa_insertion-v0_sac', use_gui=True)
+    env = gym.make('kuka_iiwa_insertion-v0', use_gui=True)
 
     obs = env.reset()
     i = 0
