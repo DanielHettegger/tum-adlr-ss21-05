@@ -89,6 +89,8 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                         print("Saving new best model to {}".format(self.save_path))
                     self.model.save(os.path.join(
                         self.save_path, self.model_name + '_best_model'))
+                    self.model.save(os.path.join(
+                        self.save_path,  'kuka_iiwa_insertion-v0_sac_best_model'))
         
 
         return True

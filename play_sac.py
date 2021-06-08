@@ -7,7 +7,7 @@ from stable_baselines3 import SAC
 
 
 def play():
-    model = SAC.load("models/kuka_iiwa_insertion-v0_sac")
+    model = SAC.load("models/kuka_iiwa_insertion-v0_sac_best_model")
 
     env = gym.make('kuka_iiwa_insertion-v0', use_gui=True)
 
