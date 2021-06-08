@@ -12,7 +12,7 @@ from stable_baselines3.common import results_plotter
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.results_plotter import load_results, ts2xy, plot_results
 from stable_baselines3.common.callbacks import BaseCallback
-
+from stable_baselines3.common.logger import get_log_dict
 
 import wandb
 
@@ -99,8 +99,19 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
                         print("Saving new best model to {}".format(self.save_path))
                     self.model.save(os.path.join(
                         self.save_path, 'kuka_iiwa_insertion-v0_sac_best_model'))
+        
 
         return True
+    
+    def _on_rollout_end(self) -> None:
+        """
+        This event is triggered before updating the policy.
+        """
+        dict = get_log_dict()
+        actor_loss = dict.get("train/actor_loss")
+        if actor_loss:
+            wandb.log({"actor_loss": actor_loss)
+        
 
 
 class LoggingWeightsABias(BaseCallback):
