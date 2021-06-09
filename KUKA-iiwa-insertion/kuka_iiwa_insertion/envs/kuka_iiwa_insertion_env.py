@@ -171,8 +171,8 @@ class IiwaInsertionEnv(gym.Env):
         observation = self.get_observation()
         reward = self.calculate_reward(observation)
 
-        #print(self.steps, self.is_done(observation))
-        return observation / self.max_observation, reward, self.is_done(observation), {}
+        observation_with_velocity = np.append(observation / self.max_observation, (self.observation_position-self.last_observation_position) / self.action_step_size)
+        return observation_with_velocity , reward, self.is_done(observation), {}
 
     def calculate_reward(self, observation):
         if self.last_observation_position is not None:

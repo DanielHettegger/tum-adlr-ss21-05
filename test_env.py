@@ -8,7 +8,7 @@ env = gym.make('kuka_iiwa_insertion-v0', use_gui=True)
 observation = [0,0,0]
 for i in range(100000):
     #env.render()
-    action = observation
+    action = observation[:3]
     max_action = np.max(np.abs(action))
     if max_action > 0.01:
         action = [a / max_action for a in action] 
