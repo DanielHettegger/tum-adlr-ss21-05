@@ -23,7 +23,7 @@ def main(args):
     wandb.config.update(args)
     print("wandb name: ", wandb.run.name)
     
-    log_dir = "tmp/"
+    log_dir = "tmp/" + wandb.run.name + "/"
     os.makedirs(log_dir, exist_ok=True)
     
     callback = SaveOnBestTrainingRewardCallback(
@@ -105,14 +105,11 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         dict = get_log_dict()
         actor_loss = dict.get("train/actor_loss")
         critic_loss = dict.get("train/critic_loss")
-        if actor_loss:
-            wandb.log({"actor_loss": actor_loss})
-        if critic_loss:
-            wandb.log({"critic_loss": critic_loss})
 
         x, y = ts2xy(load_results(self.log_dir), 'timesteps')
-        if len(x) > 0:
-            wandb.log({"episode_reward": y[-1]})
+        if len(x) > 0 and actor_loss and critic_loss:
+            mean_reward = np.mean(y[-min(100,len(y)):])
+            wandb.log({"episode_reward": y[-1], "mean_episode_reward":mean_reward, "actor_loss": actor_loss, "critic_loss": critic_loss})
 
         
 
