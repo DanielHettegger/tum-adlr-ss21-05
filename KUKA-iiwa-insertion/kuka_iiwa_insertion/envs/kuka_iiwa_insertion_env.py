@@ -13,7 +13,7 @@ from ..robot.kuka_iiwa import KukaIIWA
 class IiwaInsertionEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self,  steps_per_action=1, max_steps=1000, use_gui=False,):
+    def __init__(self,  steps_per_action=1, max_steps=1000, action_step_size=0.005, use_gui=False,):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
@@ -28,6 +28,8 @@ class IiwaInsertionEnv(gym.Env):
         self.base_position = [0.6, 0.0, 0.0]
         self.tool_reset_position = [0.6, 0, 0.4]
         self.kuka_reset_position = [0.6, 0, 0.4]
+
+        self.action_step_size = action_step_size
 
         self.max_steps = max_steps
         self.steps_per_action = steps_per_action
@@ -81,7 +83,6 @@ class IiwaInsertionEnv(gym.Env):
         self.kuka_iiwa.reset()
         
         self._generate_target_position()
-        self.action_step_size =  0.005
         self.steps = 0
 
         return np.append(self.get_observation(),[0,0,0])
@@ -132,7 +133,7 @@ class IiwaInsertionEnv(gym.Env):
 
     def calculate_reward(self, observation):
         if self.last_observation_position is not None:
-            return np.linalg.norm(self.target_position - self.last_observation_position) -np.linalg.norm(observation) - 0.002
+            return np.linalg.norm(self.target_position - self.last_observation_position) - np.linalg.norm(observation) - 0.002
         else:
             return 0.0 
 

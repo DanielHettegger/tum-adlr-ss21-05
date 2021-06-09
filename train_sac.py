@@ -2,6 +2,7 @@ import gym
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import argparse
 
 import kuka_iiwa_insertion
 
@@ -16,29 +17,28 @@ from stable_baselines3.common.logger import get_log_dict
 
 import wandb
 
-
-def main():
+def main(args):
     # 1. Start a W&B run
     wandb.init(project='pearl', entity='adlr-ss-21-05')
+    wandb.config.update(args)
     print("wandb name: ", wandb.run.name)
+    
     log_dir = "tmp/"
     os.makedirs(log_dir, exist_ok=True)
+    
     callback = SaveOnBestTrainingRewardCallback(
         check_freq=1000,check_log=1, log_dir=log_dir, model_name=wandb.run.name)
 
-    env = gym.make('kuka_iiwa_insertion-v0', use_gui=False)
+    env = gym.make('kuka_iiwa_insertion-v0', use_gui=False, steps_per_action=args.steps_per_action, max_steps=args.max_steps, action_step_size=args.action_step_size)
     env = Monitor(env, log_dir)
 
-    model = SAC("MlpPolicy", env, verbose=1)
+    model = SAC("MlpPolicy", env, verbose=args.verbosity, train_freq=(args.train_freq_num, args.train_freq_type), batch_size=args.batch_size)
 
     i = 0
     save_interval = 1000000
     while True:
         i += save_interval
         model.learn(total_timesteps=save_interval, callback=callback)
-        #print("saving model {}".format(i))
-        #plot_results([log_dir], save_interval, results_plotter.X_TIMESTEPS, "SAC Insertion")
-        # plt.show()
 
 
 class SaveOnBestTrainingRewardCallback(BaseCallback):
@@ -115,4 +115,14 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--verbosity", type=int, default=1)
+    parser.add_argument("-g", "--git_commit")
+    parser.add_argument("-s", "--max_steps", type=int, default=1000)
+    parser.add_argument("--action_step_size", type=float, default=0.005)
+    parser.add_argument("--steps_per_action", type=int, default=1)    
+    parser.add_argument("--train_freq_num", type=int, default=1)    
+    parser.add_argument("--train_freq_type", type=str, default="episode", choices=["episode","step"]) 
+    parser.add_argument("--batch_size", type=int, default=256)    
+
+    main(parser.parse_args())
