@@ -102,20 +102,15 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         dict = get_log_dict()
         actor_loss = dict.get("train/actor_loss")
         critic_loss = dict.get("train/critic_loss")
-        ep_len_mean = dict.get("rollout/ep_len_mean")
-        ep_rew_mean = dict.get("rollout/ep_rew_mean")
         if actor_loss:
             wandb.log({"actor_loss": actor_loss})
         if critic_loss:
             wandb.log({"critic_loss": critic_loss})
-        if ep_len_mean:
-            wandb.log({"ep_len_mean": ep_len_mean})
 
         x, y = ts2xy(load_results(self.log_dir), 'timesteps')
         if len(x) > 0:
             wandb.log({"episode_reward": y[-1]})
-        if ep_rew_mean:
-            wandb.log({"mean_episode_reward": ep_rew_mean})
+
         
 
 

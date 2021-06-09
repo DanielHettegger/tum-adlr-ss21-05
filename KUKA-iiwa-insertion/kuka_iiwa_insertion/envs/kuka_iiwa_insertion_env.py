@@ -19,8 +19,8 @@ class IiwaInsertionEnv(gym.Env):
             low=np.array([-1]*3),
             high=np.array([1]*3))
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-1]*3),
-            high=np.array([1]*3))
+            low=np.array([-1]*6),
+            high=np.array([1]*6))
 
         self.max_observation = 2.0
         self.target_size = 0.05
@@ -31,6 +31,9 @@ class IiwaInsertionEnv(gym.Env):
 
         self.max_steps = max_steps
         self.steps_per_action = steps_per_action
+
+        self.observation_position = None
+        self.last_observation_position = None
 
         self.np_random, _ = gym.utils.seeding.np_random()
 
@@ -121,7 +124,7 @@ class IiwaInsertionEnv(gym.Env):
         self.kuka_iiwa.reset()
         
         self._generate_target_position()
-        self.action_step_size =  np.random.uniform(0.0005,0.0015)
+        self.action_step_size =  0.005#np.random.uniform(0.001,0.005)
         self.steps = 0
 
         return self.get_observation()
@@ -162,7 +165,7 @@ class IiwaInsertionEnv(gym.Env):
     def step(self, action):
         self.steps += 1
         action = (self.action_step_size * np.array(action))
-        self.kuka_iiwa.apply_action(action, self.observation_position)
+        self.kuka_iiwa.apply_action(action, np.copy(self.observation_position))
         for i in range (self.steps_per_action):
             p.stepSimulation()
         observation = self.get_observation()
@@ -172,10 +175,18 @@ class IiwaInsertionEnv(gym.Env):
         return observation / self.max_observation, reward, self.is_done(observation), {}
 
     def calculate_reward(self, observation):
-        return -np.linalg.norm(observation)
+        if self.last_observation_position is not None:
+            #print(np.linalg.norm(self.target_position - self.last_observation_position), np.linalg.norm(observation),
+            #'\n', self.last_observation_position, self.observation_position)
+            return np.linalg.norm(self.target_position - self.last_observation_position) -np.linalg.norm(observation) - 0.002
+        else:
+            return 0.0 
 
     def get_observation(self):
         current_position = np.array(self.kuka_iiwa.get_observation()[:3])
+        if self.observation_position is not None:
+            #print("Updating: {} {}".format(self.observation_position, current_position))
+            self.last_observation_position = self.observation_position
         self.observation_position = current_position
         return self.target_position - current_position
     

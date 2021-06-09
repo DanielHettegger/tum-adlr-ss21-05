@@ -13,14 +13,17 @@ def play():
 
     obs = env.reset()
     i = 0
+    episode_reward = 0.0
     while True:
         i += 1
         action, _states = model.predict(obs)
         obs, rewards, dones, info = env.step(action)
-        if i % 100 == 0 or dones: 
-            print(obs, rewards, dones, info)
+        episode_reward += rewards
+        if i % 10 == 0 or dones: 
+            print(obs, episode_reward, rewards, info)
         if dones:
             print("="*20 + " RESET " + "="*20)
+            episode_reward = 0
             env.reset()
         #env.render()
 
