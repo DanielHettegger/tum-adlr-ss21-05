@@ -133,7 +133,7 @@ class IiwaInsertionEnv(gym.Env):
 
     def calculate_reward(self, observation):
         if self.last_observation_position is not None:
-            return np.linalg.norm(self.target_position - self.last_observation_position) - np.linalg.norm(observation) - 0.002
+            return np.linalg.norm(self.target_position - self.last_observation_position) - np.linalg.norm(observation) - 2.0 * np.linalg(observation[:2]) - 0.002
         else:
             return 0.0 
 

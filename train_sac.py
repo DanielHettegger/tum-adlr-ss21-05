@@ -32,7 +32,10 @@ def main(args):
     env = gym.make('kuka_iiwa_insertion-v0', use_gui=False, steps_per_action=args.steps_per_action, max_steps=args.max_steps, action_step_size=args.action_step_size)
     env = Monitor(env, log_dir)
 
-    model = SAC("MlpPolicy", env, verbose=args.verbosity, train_freq=(args.train_freq_num, args.train_freq_type), batch_size=args.batch_size)
+    model = SAC("MlpPolicy", env, 
+        verbose=args.verbosity, 
+        train_freq=(args.train_freq_num, args.train_freq_type), 
+        batch_size=args.batch_size)
 
     i = 0
     save_interval = 1000000
