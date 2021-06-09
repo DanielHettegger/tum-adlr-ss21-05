@@ -127,7 +127,7 @@ class IiwaInsertionEnv(gym.Env):
         self.action_step_size =  0.005#np.random.uniform(0.001,0.005)
         self.steps = 0
 
-        return self.get_observation()
+        return np.append(self.get_observation(),[0,0,0])
 
     def render(self):
         if self.rendered_img is None:
@@ -150,8 +150,8 @@ class IiwaInsertionEnv(gym.Env):
         _,_,frame,_,_ = p.getCameraImage(800, 800)#, view_matrix, proj_matrix)[2]
         frame = np.reshape(frame, (800, 800, 4))
         self.rendered_img.set_data(frame)
-        plt.draw()
-        plt.pause(.00001)
+        #plt.draw()
+        #plt.pause(.00001)
         return frame
 
     def close(self): 
@@ -172,7 +172,7 @@ class IiwaInsertionEnv(gym.Env):
         reward = self.calculate_reward(observation)
 
         observation_with_velocity = np.append(observation / self.max_observation, (self.observation_position-self.last_observation_position) / self.action_step_size)
-        return observation_with_velocity , reward, self.is_done(observation), {}
+        return observation_with_velocity,  reward, self.is_done(observation), {}
 
     def calculate_reward(self, observation):
         if self.last_observation_position is not None:
