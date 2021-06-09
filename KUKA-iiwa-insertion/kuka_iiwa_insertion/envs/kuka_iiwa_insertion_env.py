@@ -19,8 +19,8 @@ class IiwaInsertionEnv(gym.Env):
             low=np.array([-1]*3),
             high=np.array([1]*3))
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-1]*6),
-            high=np.array([1]*6))
+            low=np.array([-1]*3),
+            high=np.array([1]*3))
 
         self.max_observation = 2.0
         self.target_size = 0.05
@@ -50,16 +50,7 @@ class IiwaInsertionEnv(gym.Env):
         self.reset()
     
     def _generate_target_position(self):
-        while True:
-            distance = np.random.uniform(0.4,0.7)
-            angle = np.random.uniform(-np.pi/2, np.pi/2)
-            height = np.random.uniform(0.2,0.6)
-            
-            position_canidate = [distance * np.cos(angle), distance * np.sin(angle), height]
-            if self.kuka_iiwa.inverse_kinematics(position_canidate, [np.pi, 0, np.pi]):
-                break
-
-        self.target_position = np.array([0.6,0.0,0.05])#position_canidate)
+        self.target_position = np.array([0.6,0.0,0.05])
         self._update_visual_target()
 
     def _setup_task(self):
@@ -68,39 +59,7 @@ class IiwaInsertionEnv(gym.Env):
         self.base_id = p.loadURDF(get_resource_path('kuka_iiwa_insertion','models', 'square10x10', 'base10x10.urdf'),
                     basePosition=self.base_position,
                     physicsClientId=self.client)
-        
-        '''self.tool_id = p.loadURDF(get_resource_path('kuka_iiwa_insertion','models', 'square10x10', 'tool9x9.urdf'),
-                    basePosition=self.tool_reset_position,
-                    baseOrientation=[0,1,0,0],
-                    physicsClientId=self.client)
-
-        p.setCollisionFilterPair(
-            self.kuka_iiwa.kuka_uid,
-            self.tool_id,
-            self.kuka_iiwa.ee_index,
-            0,
-            0,
-            self.client
-        ) 
-
-        c = p.createConstraint(
-            parentBodyUniqueId = self.kuka_iiwa.kuka_uid,
-            parentLinkIndex = self.kuka_iiwa.ee_index,
-            childBodyUniqueId = self.tool_id,
-            childLinkIndex = -1,
-            jointType = p.JOINT_FIXED,
-            jointAxis = [1.0,1.0,1.0],
-            parentFramePosition = [0.0,0.0,0.0],
-            childFramePosition = [0.0,0.0,0],
-            parentFrameOrientation = [0.0,0.0,0,1.0],
-            childFrameOrientation = [0.0,0.0,0,1.0],
-            physicsClientId = self.client
-            )
-
-        #p.changeConstraint(c, maxForce=10)'''
-
-        
-
+     
     def _update_visual_target(self):
          if self.use_gui:
             if self.visual_target is None:
@@ -119,20 +78,15 @@ class IiwaInsertionEnv(gym.Env):
                     physicsClientId=self.client)
 
     def reset(self):
-        #p.resetSimulation(self.client)
-        #p.resetBasePositionAndOrientation(self.tool_id, self.tool_reset_position, [0,1,0,0])
         self.kuka_iiwa.reset()
         
         self._generate_target_position()
-        self.action_step_size =  0.005#np.random.uniform(0.001,0.005)
+        self.action_step_size =  0.005
         self.steps = 0
 
         return np.append(self.get_observation(),[0,0,0])
 
     def render(self):
-        if self.rendered_img is None:
-            self.rendered_img = plt.imshow(np.zeros((800, 800, 4)))
-
         # Base information
         kuka_id, client_id = self.kuka_iiwa.get_ids()
         proj_matrix = p.computeProjectionMatrixFOV(fov=80, aspect=1,
@@ -143,15 +97,13 @@ class IiwaInsertionEnv(gym.Env):
         # Rotate camera direction
         rot_mat = np.array(p.getMatrixFromQuaternion(ori)).reshape(3, 3)
         camera_vec = np.matmul(rot_mat, [1, 0, 0])
-        up_vec = [0,0,1]#np.matmul(rot_mat, np.array([1, 0, 1]))
+        up_vec = [0,0,1]
         view_matrix = p.computeViewMatrix(pos, pos + camera_vec, up_vec)
 
         # Display image
         _,_,frame,_,_ = p.getCameraImage(800, 800)#, view_matrix, proj_matrix)[2]
         frame = np.reshape(frame, (800, 800, 4))
         self.rendered_img.set_data(frame)
-        #plt.draw()
-        #plt.pause(.00001)
         return frame
 
     def close(self): 
@@ -171,13 +123,15 @@ class IiwaInsertionEnv(gym.Env):
         observation = self.get_observation()
         reward = self.calculate_reward(observation)
 
-        observation_with_velocity = np.append(observation / self.max_observation, (self.observation_position-self.last_observation_position) / self.action_step_size)
+        observation_with_velocity = np.append(
+                    observation / self.max_observation,
+                    (self.observation_position-self.last_observation_position) / self.action_step_size
+                )
+
         return observation_with_velocity,  reward, self.is_done(observation), {}
 
     def calculate_reward(self, observation):
         if self.last_observation_position is not None:
-            #print(np.linalg.norm(self.target_position - self.last_observation_position), np.linalg.norm(observation),
-            #'\n', self.last_observation_position, self.observation_position)
             return np.linalg.norm(self.target_position - self.last_observation_position) -np.linalg.norm(observation) - 0.002
         else:
             return 0.0 
@@ -185,7 +139,6 @@ class IiwaInsertionEnv(gym.Env):
     def get_observation(self):
         current_position = np.array(self.kuka_iiwa.get_observation()[:3])
         if self.observation_position is not None:
-            #print("Updating: {} {}".format(self.observation_position, current_position))
             self.last_observation_position = self.observation_position
         self.observation_position = current_position
         return self.target_position - current_position
