@@ -19,8 +19,8 @@ class IiwaInsertionEnv(gym.Env):
             low=np.array([-1]*3),
             high=np.array([1]*3))
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-1]*3),
-            high=np.array([1]*3))
+            low=np.array([-1]*6),
+            high=np.array([1]*6))
 
         self.max_observation = 2.0
         self.target_size = 0.05
