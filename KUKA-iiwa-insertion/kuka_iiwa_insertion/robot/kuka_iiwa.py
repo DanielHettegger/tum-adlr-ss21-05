@@ -58,10 +58,8 @@ class KukaIIWA:
     self.tool = tool
     if tool is None:
       self.kuka_uid = p.loadURDF(get_resource_path('kuka_iiwa_insertion','robot', 'urdf', 'iiwa14.urdf'), physicsClientId=self.client)
-    elif tool is "square":
-      self._load_with_tool(tool)
     else:
-      raise NotImplementedError("This tool has not been implemented")
+      self._load_with_tool(tool)
 
     #self.maxForceSlider = p.addUserDebugParameter("maxForce", 0, 1600, 800)
     self.reset()
@@ -74,6 +72,12 @@ class KukaIIWA:
     kuka = p0.loadURDF(get_resource_path('kuka_iiwa_insertion','robot', 'urdf', 'iiwa14.urdf'))
     if tool is "square":
       tool = p1.loadURDF(get_resource_path('kuka_iiwa_insertion','models', 'square10x10', 'tool9x9.urdf'))
+    elif tool is "triangular":
+      tool = p1.loadURDF(get_resource_path('kuka_iiwa_insertion','models', 'triangle10x10', 'TriangleTool9x9.urdf'))
+    elif tool is "zylindric":
+      tool = p1.loadURDF(get_resource_path('kuka_iiwa_insertion','models', 'zylinder10x10', 'ZylinderTool9x9.urdf'))
+    else:
+      raise NotImplementedError("This tool has not been implemented")
 
     ed0 = ed.UrdfEditor()
     ed0.initializeFromBulletBody(kuka, p0._client)
@@ -93,10 +97,10 @@ class KukaIIWA:
     
     self.kuka_uid = ed0.createMultiBody([0, 0, 0], [0,0,0,1], self.client)
 
-    
-
-
-
+  def reset_tool(self, tool):
+     p.removeBody(self.kuka_uid)
+     self._load_with_tool(self, tool)
+     self.reset()
 
   def reset(self):
     self.rs = 2
