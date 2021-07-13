@@ -40,7 +40,7 @@ class IiwaInsertionEnv(gym.Env):
         self.np_random, _ = gym.utils.seeding.np_random()
 
         self.tasks = tasks
-        self.task_no = len(tasks)
+        self.number_of_tasks = len(tasks)
 
         self.use_gui = use_gui
         if use_gui:
