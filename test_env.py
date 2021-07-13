@@ -18,7 +18,7 @@ for i in range(100000):
     if i % 1000 == 0:
         print(observation, reward, done)
 
-    if i % 3000 == 0:
+    if i % 3000 == 0 and i is not 0:
         current_task_id += 1
         current_task_id %= env.number_of_tasks
         print("Resetting Env to id {}".format(current_task_id))

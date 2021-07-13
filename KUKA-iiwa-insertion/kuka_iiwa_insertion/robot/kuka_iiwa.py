@@ -99,7 +99,7 @@ class KukaIIWA:
 
   def reset_tool(self, tool):
      p.removeBody(self.kuka_uid)
-     self._load_with_tool(self, tool)
+     self._load_with_tool(tool)
      self.reset()
 
   def reset(self):
