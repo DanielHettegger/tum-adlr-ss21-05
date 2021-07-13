@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import argparse
+import time
 
 import kuka_iiwa_insertion
 
@@ -13,21 +14,26 @@ from stable_baselines3.common import results_plotter
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.results_plotter import load_results, ts2xy, plot_results
 from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.logger import get_log_dict
+#from stable_baselines3.common.logger import get_log_dict
 
 import wandb
 
 def main(args):
+    print(args)
     # 1. Start a W&B run
-    wandb.init(project='pearl', entity='adlr-ss-21-05')
-    wandb.config.update(args)
-    print("wandb name: ", wandb.run.name)
-    
-    log_dir = "tmp/" + wandb.run.name + "/"
+    if not args.no_logging:
+        wandb.init(project='pearl', entity='adlr-ss-21-05')
+        wandb.config.update(args)
+        print("wandb name: ", wandb.run.name)
+        run_name = wandb.run.name
+    else:
+        run_name = "run_" + str(time.time())
+
+    log_dir = "tmp/" + run_name + "/"
     os.makedirs(log_dir, exist_ok=True)
     
     callback = SaveOnBestTrainingRewardCallback(
-        check_freq=1000,check_log=1, log_dir=log_dir, model_name=wandb.run.name)
+        check_freq=1000,check_log=1, log_dir=log_dir, model_name=run_name, wandb_logging= not args.no_logging)
 
     env = gym.make('kuka_iiwa_insertion-v0', use_gui=False, steps_per_action=args.steps_per_action, max_steps=args.max_steps, action_step_size=args.action_step_size)
     env = Monitor(env, log_dir)
@@ -35,7 +41,11 @@ def main(args):
     model = PEARL("MlpPolicy", env, 
         verbose=args.verbosity, 
         train_freq=(args.train_freq_num, args.train_freq_type), 
-        batch_size=args.batch_size)
+        batch_size=args.batch_size,
+        n_traintasks = 3,
+        n_evaltasks = 3,
+        n_epochtasks= 3,
+        latent_dim = 5)
 
     i = 0
     save_interval = 1000000
@@ -57,7 +67,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
     :param verbose: (int)
     """
 
-    def __init__(self, check_freq: int, check_log: int, log_dir: str, model_name: str, verbose=1):
+    def __init__(self, check_freq: int, check_log: int, log_dir: str, model_name: str, verbose=1, wandb_logging=True):
         super(SaveOnBestTrainingRewardCallback, self).__init__(verbose)
         self.check_freq = check_freq
         self.check_log = check_log
@@ -65,6 +75,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         self.save_path = 'models'
         self.model_name = model_name
         self.best_mean_reward = -np.inf
+        self.wandb_logging = wandb_logging
 
     def _init_callback(self) -> None:
         # Create folder if needed
@@ -102,14 +113,16 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         """
         This event is triggered before updating the policy.
         """
-        dict = get_log_dict()
+        dict = load_results(self.log_dir)
+        print(dict)
         actor_loss = dict.get("train/actor_loss")
         critic_loss = dict.get("train/critic_loss")
 
         x, y = ts2xy(load_results(self.log_dir), 'timesteps')
         if len(x) > 0 and actor_loss and critic_loss:
             mean_reward = np.mean(y[-min(100,len(y)):])
-            wandb.log({"episode_reward": y[-1], "mean_episode_reward":mean_reward, "actor_loss": actor_loss, "critic_loss": critic_loss})
+            if self.wandb_logging:
+                wandb.log({"episode_reward": y[-1], "mean_episode_reward":mean_reward, "actor_loss": actor_loss, "critic_loss": critic_loss})
 
         
 
@@ -124,5 +137,6 @@ if __name__ == '__main__':
     parser.add_argument("--train_freq_num", type=int, default=1)    
     parser.add_argument("--train_freq_type", type=str, default="episode", choices=["episode","step"]) 
     parser.add_argument("--batch_size", type=int, default=256)    
+    parser.add_argument('--no-logging', dest='no_logging', action='store_true')
 
     main(parser.parse_args())
