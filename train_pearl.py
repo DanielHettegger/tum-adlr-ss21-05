@@ -10,6 +10,7 @@ import kuka_iiwa_insertion
 
 from stable_baselines3 import PEARL
 
+from stable_baselines3.common.logger import Logger,TensorBoardOutputFormat
 from stable_baselines3.common import results_plotter
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.results_plotter import load_results, ts2xy, plot_results
@@ -46,6 +47,8 @@ def main(args):
         n_evaltasks = 3,
         n_epochtasks= 3,
         latent_dim = 5)
+    
+    model.set_logger(Logger(log_dir, [TensorBoardOutputFormat]))
 
     i = 0
     save_interval = 1000000
@@ -114,7 +117,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         This event is triggered before updating the policy.
         """
         dict = load_results(self.log_dir)
-        print(dict)
+        #print(dict)
         actor_loss = dict.get("train/actor_loss")
         critic_loss = dict.get("train/critic_loss")
 

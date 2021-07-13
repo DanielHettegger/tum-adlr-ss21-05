@@ -41,6 +41,7 @@ class IiwaInsertionEnv(gym.Env):
 
         self.tasks = tasks
         self.number_of_tasks = len(tasks)
+        self.current_task = 0
 
         self.use_gui = use_gui
         if use_gui:
@@ -49,7 +50,7 @@ class IiwaInsertionEnv(gym.Env):
             self.client = p.connect(p.DIRECT)
         self.closed = False
         self.visual_target = None
-        self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool=self.tasks[0])
+        self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool=self.tasks[self.current_task])
         self._setup_task()
         self.rendered_img = None
         self.reset()
@@ -92,7 +93,10 @@ class IiwaInsertionEnv(gym.Env):
 
     def reset_task(self, task_id):
         print("Resetting to task {}".format(task_id))
-        self.kuka_iiwa.reset_tool(self.tasks[task_id])
+        if self.current_task is not task_id:
+            self.kuka_iiwa.reset_tool(self.tasks[task_id])
+            self.current_task = task_id
+        self.reset()
 
     def render(self):
         # Base information
