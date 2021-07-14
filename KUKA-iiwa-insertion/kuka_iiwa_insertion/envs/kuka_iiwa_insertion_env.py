@@ -96,7 +96,7 @@ class IiwaInsertionEnv(gym.Env):
         if self.current_task is not task_id:
             self.kuka_iiwa.reset_tool(self.tasks[task_id])
             self.current_task = task_id
-        self.reset()
+        return self.reset()
 
     def render(self):
         # Base information

@@ -10,7 +10,6 @@ def play():
     env = gym.make('kuka_iiwa_insertion-v0', use_gui=True)
     model = PEARL.load("models/kuka_iiwa_insertion-v0_pearl_best_model", env=env)
 
-
     obs = env.reset()
     i = 0
     episode_reward = 0.0
@@ -24,7 +23,8 @@ def play():
         if dones:
             print("="*20 + " RESET " + "="*20)
             episode_reward = 0
-            env.reset()
+            obs = env.reset_task(np.random.randint(0,3))
+
         #env.render()
 
 if __name__ == "__main__":

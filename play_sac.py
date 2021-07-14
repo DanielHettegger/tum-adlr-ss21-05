@@ -16,7 +16,7 @@ def play():
     episode_reward = 0.0
     while True:
         i += 1
-        action, _states = model.predict(obs)
+        action, _states = model.predict(obs, deterministic=True)
         obs, rewards, dones, info = env.step(action)
         episode_reward += rewards
         if i % 10 == 0 or dones: 
