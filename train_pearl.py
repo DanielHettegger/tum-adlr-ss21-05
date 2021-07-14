@@ -10,7 +10,7 @@ import kuka_iiwa_insertion
 
 from stable_baselines3 import PEARL
 
-from stable_baselines3.common.logger import Logger,TensorBoardOutputFormat
+from stable_baselines3.common.logger import Logger,CSVOutputFormat
 from stable_baselines3.common import results_plotter
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.results_plotter import load_results, ts2xy, plot_results
@@ -48,13 +48,15 @@ def main(args):
         n_epochtasks= 3,
         latent_dim = 5)
     
-    model.set_logger(Logger(log_dir, [TensorBoardOutputFormat]))
+    model.set_logger(Logger(log_dir, [CSVOutputFormat(log_dir+"log.csv")]))
 
     i = 0
-    save_interval = 1000000
+    save_interval = 10000
     while True:
         i += save_interval
         model.learn(total_timesteps=save_interval, callback=callback)
+        model.save(os.path.join(
+                        "models", run_name + '_' + str(i)))
 
 
 class SaveOnBestTrainingRewardCallback(BaseCallback):
