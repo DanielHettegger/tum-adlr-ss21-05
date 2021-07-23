@@ -157,7 +157,7 @@ class KukaIIWA:
     for i, qi in enumerate(q):
       p.setJointMotorControl2(bodyUniqueId= self.kuka_uid,
                               jointIndex= i+1,
-                              controlMode= p.POSITION_CONTROL,
+                              controlMode= p.PD_CONTROL,
                               targetPosition= qi,
                               targetVelocity=0,
                               #force=self.max_force,

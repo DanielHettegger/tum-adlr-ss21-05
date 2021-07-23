@@ -48,6 +48,7 @@ class IiwaInsertionEnv(gym.Env):
             self.client = p.connect(p.GUI) 
         else:
             self.client = p.connect(p.DIRECT)
+        p.setGravity(0,0,0) #disable gravity for simulated gravity compensation
         self.closed = False
         self.visual_target = None
         self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool=self.tasks[self.current_task])
