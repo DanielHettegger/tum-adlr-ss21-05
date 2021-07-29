@@ -22,7 +22,7 @@ from scipy.spatial.transform import Rotation as R
 
 
 class KukaIIWA:
-  def __init__(self,client, reset_position = [0.6, 0, 0.4], tool=None):
+  def __init__(self,client, reset_position = [0.6, 0, 0.4], tool = None, control_mode=None):
     self.client = client
 
     self.ee_index = 8
@@ -55,11 +55,21 @@ class KukaIIWA:
                          '{}_joint_6'.format(self.robot_name):{'lower': np.deg2rad(-120.0), 'upper':np.deg2rad(120.0)},
                          '{}_joint_7'.format(self.robot_name):{'lower': np.deg2rad(-175.0), 'upper':np.deg2rad(175.0)},
                          }
+    self.joint_indices = [i+1 for i in range(len(self.joint_names))]
+    
     self.tool = tool
     if tool is None:
       self.kuka_uid = p.loadURDF(get_resource_path('kuka_iiwa_insertion','robot', 'urdf', 'iiwa14.urdf'), physicsClientId=self.client)
     else:
       self._load_with_tool(tool)
+
+    if control_mode == None:
+      self.control_mode = ["position"]
+    elif control_mode in ["position", "impedance"]:
+      self.control_mode = control_mode
+    else:
+      print("kuka_iiwa.py __init__ Unknown control type. Defaultig to position control.")
+      self.control_mode = ["position"]
 
     #self.maxForceSlider = p.addUserDebugParameter("maxForce", 0, 1600, 800)
     self.reset()
@@ -111,8 +121,18 @@ class KukaIIWA:
 
     
     q = self.inverse_kinematics(self.target_position, self.target_orientation)
+    self.target_q = q
     if q:
       self.force_joint_targets(q)
+
+    # disable position controller 
+    p.setJointMotorControlArray(bodyUniqueId= self.kuka_uid,
+                              jointIndices= self.joint_indices,
+                              controlMode= p.POSITION_CONTROL,
+                              targetPositions= [0] * len(self.joint_names),
+                              targetVelocities= [0] * len(self.joint_names),
+                              forces= [0] * len(self.joint_names),
+                              physicsClientId = self.client)
   
   def get_ids(self):
     return self.client, self.kuka_uid
@@ -145,25 +165,50 @@ class KukaIIWA:
     target_candidate[1] += action[1]
     target_candidate[2] += action[2]
     #self.target_orientation[2] += action[3]
-
     
     q = self.inverse_kinematics(target_candidate, self.target_orientation) 
     if q:
-      self.set_joint_targets(q)
+      self.target_q = q
       self.target_position = target_candidate
+      self.step_controller()
       #print("Target position: {}\nActions: {}".format(target_candidate, action))
 
-  def set_joint_targets(self, q):
-    for i, qi in enumerate(q):
-      p.setJointMotorControl2(bodyUniqueId= self.kuka_uid,
-                              jointIndex= i+1,
-                              controlMode= p.PD_CONTROL,
-                              targetPosition= qi,
-                              targetVelocity=0,
-                              #force=self.max_force,
-                              #maxVelocity=self.max_velocity,
-                              positionGain=0.3,
-                              velocityGain=1)
+  def step_controller(self):
+    if self.control_mode is "position":
+      p.setJointMotorControlArray(bodyUniqueId= self.kuka_uid,
+                            jointIndices= self.joint_indices,
+                            controlMode= p.POSITION_CONTROL,
+                            targetPositions= self.target_q,
+                            targetVelocities= [0] * len(self.joint_names),
+                            forces= [self.max_force] * len(self.joint_names),
+                            physicsClientId = self.client)
+    elif self.control_mode is "impedance":
+      states = p.getJointStates(bodyUniqueId = self.kuka_uid,
+                                  jointIndices = self.joint_indices,
+                                  physicsClientId = self.client)
+
+      q = [s[0] for s in states]
+      q_dot = [s[1] for s in states]
+
+      M = p.calculateMassMatrix(bodyUniqueId= self.kuka_uid, objPositions = q, physicsClientId = self.client)
+
+      q = np.array(q)
+      q_des = np.array(self.target_q)
+      q_dot = np.array(q_dot)
+      M = np.array(M)
+      K = np.eye(len(q)) * 80
+      D = np.eye(len(q)) * 0.1
+
+      t = M @ (-K @ (q - q_des) - D @ q_dot)
+      
+      p.setJointMotorControlArray(bodyUniqueId= self.kuka_uid,
+                            jointIndices= self.joint_indices,
+                            controlMode= p.TORQUE_CONTROL,
+                            targetPositions= [0] * len(self.joint_names),
+                            targetVelocities= [0] * len(self.joint_names),
+                            forces= t,
+                            physicsClientId = self.client)
+    
   
   def force_joint_targets(self, q):
     for i, qi in enumerate(q):
@@ -171,6 +216,14 @@ class KukaIIWA:
                         jointIndex= i+1,
                         targetValue= qi,
                         physicsClientId= self.client)
+  
+  def apply_tcp_force(self, force):
+    p.applyExternalForce(self.kuka_uid,
+                         self.ee_index,
+                         force,
+                         [0,0,0],
+                         p.WORLD_FRAME,
+                         self.client)
 
 
   def inverse_kinematics(self, position, orientation, redundancy=None, redundancy_status=None):

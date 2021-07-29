@@ -51,7 +51,7 @@ class IiwaInsertionEnv(gym.Env):
         p.setGravity(0,0,0) #disable gravity for simulated gravity compensation
         self.closed = False
         self.visual_target = None
-        self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool=self.tasks[self.current_task])
+        self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool=self.tasks[self.current_task], control_mode="impedance")
         self._setup_task()
         self.rendered_img = None
         self.reset()
