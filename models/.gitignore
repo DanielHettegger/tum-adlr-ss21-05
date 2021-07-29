@@ -1,3 +1,2 @@
-# dont upload models
-*
 !.gitignore
+./*

@@ -1,0 +1,3 @@
+[submodule "lib/stable-baselines3"]
+	path = lib/stable-baselines3
+	url = https://github.com/DanielHettegger/stable-baselines3.git

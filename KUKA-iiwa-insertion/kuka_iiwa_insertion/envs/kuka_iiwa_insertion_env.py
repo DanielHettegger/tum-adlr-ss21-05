@@ -13,7 +13,7 @@ from ..robot.kuka_iiwa import KukaIIWA
 class IiwaInsertionEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self,  steps_per_action=1, max_steps=1000, action_step_size=0.005, use_gui=False,):
+    def __init__(self,  steps_per_action=1, max_steps=1000, action_step_size=0.005, tasks=["square","zylindric","triangular"], use_gui=False,):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
@@ -39,14 +39,19 @@ class IiwaInsertionEnv(gym.Env):
 
         self.np_random, _ = gym.utils.seeding.np_random()
 
+        self.tasks = tasks
+        self.number_of_tasks = len(tasks)
+        self.current_task = 0
+
         self.use_gui = use_gui
         if use_gui:
             self.client = p.connect(p.GUI) 
         else:
             self.client = p.connect(p.DIRECT)
+        p.setGravity(0,0,0) #disable gravity for simulated gravity compensation
         self.closed = False
         self.visual_target = None
-        self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool="square")
+        self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool=self.tasks[self.current_task], control_mode="impedance")
         self._setup_task()
         self.rendered_img = None
         self.reset()
@@ -86,6 +91,13 @@ class IiwaInsertionEnv(gym.Env):
         self.steps = 0
 
         return np.append(self.get_observation(),[0,0,0])
+
+    def reset_task(self, task_id):
+        print("Resetting to task {}".format(task_id))
+        if self.current_task is not task_id:
+            self.kuka_iiwa.reset_tool(self.tasks[task_id])
+            self.current_task = task_id
+        return self.reset()
 
     def render(self):
         # Base information
