@@ -26,8 +26,12 @@ class IiwaInsertionEnv(gym.Env):
         self.target_size = 0.05
 
         self.base_position = [0.6, 0.0, 0.0]
-        self.tool_reset_position = [0.6, 0, 0.4]
         self.kuka_reset_position = [0.6, 0, 0.4]
+
+        x_limits = [self.kuka_reset_position[0]-0.1, self.kuka_reset_position[0]+0.1]
+        y_limits = [self.kuka_reset_position[1]-0.1, self.kuka_reset_position[1]+0.1]
+        z_limits = [0, self.kuka_reset_position[2]+0.1]
+        self.limits = [x_limits, y_limits, z_limits]
 
         self.action_step_size = action_step_size
 
@@ -130,7 +134,12 @@ class IiwaInsertionEnv(gym.Env):
     def step(self, action):
         self.steps += 1
         action = (self.action_step_size * np.array(action))
-        self.kuka_iiwa.apply_action(action, np.copy(self.observation_position))
+
+        position = np.copy(self.observation_position)
+        for i, limit in enumerate(self.limits):
+            position[i] = np.clip(position[i], limit[0], limit[1])
+
+        self.kuka_iiwa.apply_action(action, position)
         for i in range (self.steps_per_action):
             p.stepSimulation()
         observation = self.get_observation()
