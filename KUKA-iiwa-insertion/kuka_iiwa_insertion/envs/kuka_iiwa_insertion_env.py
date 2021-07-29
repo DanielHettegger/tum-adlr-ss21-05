@@ -13,7 +13,7 @@ from ..robot.kuka_iiwa import KukaIIWA
 class IiwaInsertionEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self,  steps_per_action=1, max_steps=1000, action_step_size=0.005, tasks=["square","zylindric","triangular"], use_gui=False,):
+    def __init__(self,  steps_per_action=1, max_steps=1000, action_step_size=0.005, tasks=["square","zylindric","triangular"], use_gui=False, apply_disturbance_force=True):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
@@ -37,6 +37,7 @@ class IiwaInsertionEnv(gym.Env):
 
         self.max_steps = max_steps
         self.steps_per_action = steps_per_action
+        self.apply_disturbance_force = apply_disturbance_force
 
         self.observation_position = None
         self.last_observation_position = None
@@ -60,9 +61,20 @@ class IiwaInsertionEnv(gym.Env):
         self.rendered_img = None
         self.reset()
     
+    def _generate_task(self):
+        self._generate_force_disturbance()
+        self._generate_target_position()
+
     def _generate_target_position(self):
         self.target_position = np.array([0.6,0.0,0.05])
         self._update_visual_target()
+    
+    def _generate_force_disturbance(self):
+        if self.apply_disturbance_force:
+            self.disturbance_force = [0.02,0,0]
+        else:
+            self.disturbance_force = [0,0,0]
+
 
     def _setup_task(self):
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -91,7 +103,7 @@ class IiwaInsertionEnv(gym.Env):
     def reset(self):
         self.kuka_iiwa.reset()
         
-        self._generate_target_position()
+        self._generate_task()
         self.steps = 0
 
         return np.append(self.get_observation(),[0,0,0])
@@ -141,6 +153,8 @@ class IiwaInsertionEnv(gym.Env):
 
         self.kuka_iiwa.apply_action(action, position)
         for i in range (self.steps_per_action):
+            self.kuka_iiwa.step_controller()
+            self.kuka_iiwa.apply_tcp_force(self.disturbance_force)
             p.stepSimulation()
         observation = self.get_observation()
         reward = self.calculate_reward(observation)

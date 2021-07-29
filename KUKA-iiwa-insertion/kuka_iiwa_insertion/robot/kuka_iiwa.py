@@ -170,7 +170,6 @@ class KukaIIWA:
     if q:
       self.target_q = q
       self.target_position = target_candidate
-      self.step_controller()
       #print("Target position: {}\nActions: {}".format(target_candidate, action))
 
   def step_controller(self):
@@ -182,6 +181,7 @@ class KukaIIWA:
                             targetVelocities= [0] * len(self.joint_names),
                             forces= [self.max_force] * len(self.joint_names),
                             physicsClientId = self.client)
+
     elif self.control_mode is "impedance":
       states = p.getJointStates(bodyUniqueId = self.kuka_uid,
                                   jointIndices = self.joint_indices,
