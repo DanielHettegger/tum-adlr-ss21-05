@@ -45,9 +45,9 @@ def main(args):
         verbose=args.verbosity, 
         train_freq=(args.train_freq_num, args.train_freq_type), 
         batch_size=args.batch_size,
-        n_traintasks = 3,
-        n_evaltasks = 3,
-        n_epochtasks= 3,
+        n_traintasks = 2,
+        n_evaltasks = 2,
+        n_epochtasks= 2,
         latent_dim = 4)
     
     model.set_logger(Logger(log_dir, [CSVOutputFormat(log_dir+"log.csv")]))
