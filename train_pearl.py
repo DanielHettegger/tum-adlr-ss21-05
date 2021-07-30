@@ -6,6 +6,7 @@ import argparse
 import time
 
 import kuka_iiwa_insertion
+from numpy.core.fromnumeric import mean
 
 
 from stable_baselines3 import PEARL
@@ -15,6 +16,7 @@ from stable_baselines3.common import results_plotter
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.results_plotter import load_results, ts2xy, plot_results
 from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.evaluation import evaluate_meta_policy
 #from stable_baselines3.common.logger import get_log_dict
 
 import wandb
@@ -46,17 +48,21 @@ def main(args):
         n_traintasks = 3,
         n_evaltasks = 3,
         n_epochtasks= 3,
-        latent_dim = 5)
+        latent_dim = 4)
     
     model.set_logger(Logger(log_dir, [CSVOutputFormat(log_dir+"log.csv")]))
 
     i = 0
-    save_interval = 10000
+    eval_interval = 10000
+    prev_mean_rew = -np.inf
     while True:
-        i += save_interval
-        model.learn(total_timesteps=save_interval, callback=callback)
-        model.save(os.path.join(
-                        "models", run_name + '_' + str(i)))
+        i += eval_interval
+        model.learn(total_timesteps=eval_interval, callback=callback)
+        mean_reward, std_reward = evaluate_meta_policy(model, env)
+        if mean_reward > prev_mean_rew:
+            prev_mean_rew = mean_reward
+            model.save(os.path.join(
+                            "models", run_name + '_best_model'))
 
 
 class SaveOnBestTrainingRewardCallback(BaseCallback):
@@ -88,46 +94,13 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
             os.makedirs(self.save_path, exist_ok=True)
 
     def _on_step(self) -> bool:
-        if self.n_calls % self.check_freq == 0:
-
-            # Retrieve training reward
-            x, y = ts2xy(load_results(self.log_dir), 'timesteps')
-            if len(x) > 0:
-                # Mean training reward over the last 100 episodes
-                mean_reward = np.mean(y[-100:])
-                if self.verbose > 0:
-                    print("Num timesteps: {}".format(self.num_timesteps))
-                    print("Best mean reward: {:.2f} - Last mean reward per episode: {:.2f}".format(
-                        self.best_mean_reward, mean_reward))
-
-                # New best model, you could save the agent here
-                if mean_reward > self.best_mean_reward:
-                    self.best_mean_reward = mean_reward
-                    # Example for saving best model
-                    if self.verbose > 0:
-                        print("Saving new best model to {}".format(self.save_path))
-                    self.model.save(os.path.join(
-                        self.save_path, self.model_name + '_best_model'))
-                    self.model.save(os.path.join(
-                        self.save_path,  'kuka_iiwa_insertion-v0_pearl_best_model'))
-        
-
         return True
     
     def _on_rollout_end(self) -> None:
-        """
-        This event is triggered before updating the policy.
-        """
-        dict = load_results(self.log_dir)
-        #print(dict)
-        actor_loss = dict.get("train/actor_loss")
-        critic_loss = dict.get("train/critic_loss")
-
-        x, y = ts2xy(load_results(self.log_dir), 'timesteps')
-        if len(x) > 0 and actor_loss and critic_loss:
-            mean_reward = np.mean(y[-min(100,len(y)):])
-            if self.wandb_logging:
-                wandb.log({"episode_reward": y[-1], "mean_episode_reward":mean_reward, "actor_loss": actor_loss, "critic_loss": critic_loss})
+        mean_reward = self.locals.mean_reward
+        episode_rewards = self.locals.episode_rewards
+        if self.wandb_logging:
+            wandb.log({"episode_reward": episode_rewards, "mean_episode_reward":mean_reward})# "actor_loss": actor_loss, "critic_loss": critic_loss})
 
         
 

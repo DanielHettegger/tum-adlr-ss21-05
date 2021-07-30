@@ -13,7 +13,7 @@ from ..robot.kuka_iiwa import KukaIIWA
 class IiwaInsertionEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self,  steps_per_action=1, max_steps=1000, action_step_size=0.005, tasks=["square","zylindric","triangular"], use_gui=False, apply_disturbance_force=True):
+    def __init__(self,  steps_per_action=1, max_steps=1000, action_step_size=0.005, tasks=["square","zylindric"], use_gui=False, apply_disturbance_force=True):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
