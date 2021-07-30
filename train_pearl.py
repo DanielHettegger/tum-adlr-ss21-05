@@ -58,7 +58,7 @@ def main(args):
     while True:
         i += eval_interval
         model.learn(total_timesteps=eval_interval, callback=callback)
-        mean_reward, std_reward = evaluate_meta_policy(model, env)
+        mean_reward, std_reward = evaluate_meta_policy(model, model.env)
         if mean_reward > prev_mean_rew:
             prev_mean_rew = mean_reward
             model.save(os.path.join(
