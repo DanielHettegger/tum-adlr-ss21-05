@@ -59,10 +59,13 @@ def main(args):
         i += eval_interval
         model.learn(total_timesteps=eval_interval, callback=callback)
         mean_reward, std_reward = evaluate_meta_policy(model, model.env)
+        wandb.log({"eval_mean_reward":mean_reward})
         if mean_reward > prev_mean_rew:
             prev_mean_rew = mean_reward
             model.save(os.path.join(
                             "models", run_name + '_best_model'))
+        model.save(os.path.join(
+                            "models", run_name + '_latest_model'))
 
 
 class SaveOnBestTrainingRewardCallback(BaseCallback):
@@ -97,8 +100,8 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         return True
     
     def _on_rollout_end(self) -> None:
-        mean_reward = self.locals.mean_reward
-        episode_rewards = self.locals.episode_rewards
+        mean_reward = self.locals["mean_reward"]
+        episode_rewards = self.locals["episode_rewards"]
         if self.wandb_logging:
             wandb.log({"episode_reward": episode_rewards[-1], "mean_episode_reward":mean_reward})# "actor_loss": actor_loss, "critic_loss": critic_loss})
 
