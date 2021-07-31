@@ -8,12 +8,13 @@ from numpy import sin, cos
 
 from ..files import get_resource_path
 from ..robot.kuka_iiwa import KukaIIWA
+from disturbance_force import StaticForce, SpringForceXY
 
 
 class IiwaInsertionEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self,  steps_per_action=1, max_steps=1000, action_step_size=0.005, tasks=["square","zylindric"], use_gui=False, apply_disturbance_force=True):
+    def __init__(self,  steps_per_action=1, max_steps=1000, action_step_size=0.005, tasks=None, use_gui=False, apply_disturbance_force=True):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
@@ -44,7 +45,18 @@ class IiwaInsertionEnv(gym.Env):
 
         self.np_random, _ = gym.utils.seeding.np_random()
 
-        self.tasks = tasks
+        if tasks is None:
+            self.tasks = [
+                            ("square", "none"),
+                            ("square", "static"),
+                            ("square", "spring"),
+                            ("zylinder", "none"),
+                            ("zylinder", "static"),
+                            ("zylinder", "spring"),
+                         ]
+        else:
+            self.tasks = tasks
+        
         self.number_of_tasks = len(tasks)
         self.current_task = 0
 
@@ -56,7 +68,7 @@ class IiwaInsertionEnv(gym.Env):
         p.setGravity(0,0,0) #disable gravity for simulated gravity compensation
         self.closed = False
         self.visual_target = None
-        self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool=self.tasks[self.current_task], control_mode="impedance")
+        self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool=self.tasks[self.current_task][0], control_mode="impedance")
         self._setup_task()
         self.rendered_img = None
         self.reset()
@@ -69,12 +81,8 @@ class IiwaInsertionEnv(gym.Env):
         self.target_position = np.array([0.6,0.0,0.05])
         self._update_visual_target()
     
-    def _generate_force_disturbance(self):
-        if self.apply_disturbance_force:
-            self.disturbance_force = [0.02,0,0]
-        else:
-            self.disturbance_force = [0,0,0]
-
+    def _generate_force_disturbance(self, disturbance="none"):
+        self.disturbance.generate()
 
     def _setup_task(self):
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -82,6 +90,15 @@ class IiwaInsertionEnv(gym.Env):
         self.base_id = p.loadURDF(get_resource_path('kuka_iiwa_insertion','models', 'square10x10', 'base10x10.urdf'),
                     basePosition=self.base_position,
                     physicsClientId=self.client)
+        self.setup_disturbance(self.tasks[self.current_task][1])
+
+    def _setup_disturbance(self, disturbance="none"):
+         if disturbance is "static":
+            self.disturbance_force = StaticForce()
+        elif disturbance is "spring":
+            self.disturbance_force = SpringForceXY()
+        else:
+            self.disturbance_force = StaticForce(magnitude=0)
      
     def _update_visual_target(self):
          if self.use_gui:
@@ -101,8 +118,7 @@ class IiwaInsertionEnv(gym.Env):
                     physicsClientId=self.client)
 
     def reset(self):
-        self.kuka_iiwa.reset()
-        
+        self.kuka_iiwa.reset() 
         self._generate_task()
         self.steps = 0
 
@@ -111,7 +127,9 @@ class IiwaInsertionEnv(gym.Env):
     def reset_task(self, task_id):
         print("Resetting to task {}".format(task_id))
         if self.current_task is not task_id:
-            self.kuka_iiwa.reset_tool(self.tasks[task_id])
+            tool, disturbance = self.tasks[task_id]
+            self.kuka_iiwa.reset_tool(tool)
+            self._setup_disturbance(disturbance)
             self.current_task = task_id
         return self.reset()
 
@@ -154,7 +172,7 @@ class IiwaInsertionEnv(gym.Env):
         self.kuka_iiwa.apply_action(action, position)
         for i in range (self.steps_per_action):
             self.kuka_iiwa.step_controller()
-            self.kuka_iiwa.apply_tcp_force(self.disturbance_force)
+            self.kuka_iiwa.apply_tcp_force(self.disturbance_force.get_force(self.observation_position))
             p.stepSimulation()
         observation = self.get_observation()
         reward = self.calculate_reward(observation)
