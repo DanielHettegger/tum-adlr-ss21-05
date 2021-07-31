@@ -100,7 +100,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         mean_reward = self.locals.mean_reward
         episode_rewards = self.locals.episode_rewards
         if self.wandb_logging:
-            wandb.log({"episode_reward": episode_rewards, "mean_episode_reward":mean_reward})# "actor_loss": actor_loss, "critic_loss": critic_loss})
+            wandb.log({"episode_reward": episode_rewards[-1], "mean_episode_reward":mean_reward})# "actor_loss": actor_loss, "critic_loss": critic_loss})
 
         
 

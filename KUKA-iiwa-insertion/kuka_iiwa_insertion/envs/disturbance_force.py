@@ -1,5 +1,5 @@
 import numpy as np
-from np.linalg import norm
+from numpy.linalg import norm
 
 class DisturbanceForce():
     def __init__(self):
@@ -36,7 +36,7 @@ class StaticForce(DisturbanceForce):
 class SpringForceXY(DisturbanceForce):
     def __init__(self, max_magnitude=0.2, distance=None, direction=None, spring_konstant=None, position=None, center_position=[0.6,0.0]): # center position
         self.max_magnitude = max_magnitude
-        self.magnitude = magnitude
+        self.distance = distance
         self.direction = direction
         self.spring_konstant = spring_konstant
         self.sample_spring_konstant = spring_konstant is None
@@ -59,14 +59,15 @@ class SpringForceXY(DisturbanceForce):
         if self.position is not None:
             self.resting_position = self.position
         else:
-            self.resting_positon = position
+            self.resting_position = position
 
         if self.sample_spring_konstant:
             self.spring_konstant = np.random.rand(1) * 1.4 + 0.1
     
     def get_force(self, position):
         position = np.array(position[:2])
-        return (self.resting_position - (position - self.center_position)) * self.spring_konstant        
+        force =  (self.resting_position - (position - self.center_position)) * self.spring_konstant
+        return np.append(force, [0.0])        
                 
 
 
