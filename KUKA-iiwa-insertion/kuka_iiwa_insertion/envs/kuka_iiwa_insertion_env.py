@@ -93,7 +93,7 @@ class IiwaInsertionEnv(gym.Env):
         self.setup_disturbance(self.tasks[self.current_task][1])
 
     def _setup_disturbance(self, disturbance="none"):
-         if disturbance is "static":
+        if disturbance is "static":
             self.disturbance_force = StaticForce()
         elif disturbance is "spring":
             self.disturbance_force = SpringForceXY()
