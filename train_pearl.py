@@ -41,14 +41,16 @@ def main(args):
     env = gym.make('kuka_iiwa_insertion-v0', use_gui=False, steps_per_action=args.steps_per_action, max_steps=args.max_steps, action_step_size=args.action_step_size)
     env = Monitor(env, log_dir)
 
+    no_tasks = args.no_tasks if args.no_tasks is not -1 else env.number_of_tasks
+
     model = PEARL("MlpPolicy", env, 
         verbose=args.verbosity, 
         train_freq=(args.train_freq_num, args.train_freq_type), 
         batch_size=args.batch_size,
-        n_traintasks = env.number_of_tasks,
-        n_evaltasks = env.number_of_tasks,
-        n_epochtasks= env.number_of_tasks,
-        latent_dim = 5)
+        n_traintasks = no_tasks,
+        n_evaltasks = no_tasks,
+        n_epochtasks= no_tasks,
+        latent_dim = args.latent_dim)
     
     model.set_logger(Logger(log_dir, [CSVOutputFormat(log_dir+"log.csv")]))
 
@@ -111,7 +113,6 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbosity", type=int, default=1)
-    parser.add_argument("-g", "--git_commit")
     parser.add_argument("-s", "--max_steps", type=int, default=1000)
     parser.add_argument("--action_step_size", type=float, default=0.005)
     parser.add_argument("--steps_per_action", type=int, default=1)    
@@ -119,5 +120,9 @@ if __name__ == '__main__':
     parser.add_argument("--train_freq_type", type=str, default="episode", choices=["episode","step"]) 
     parser.add_argument("--batch_size", type=int, default=256)    
     parser.add_argument('--no-logging', dest='no_logging', action='store_true')
+    parser.add_argument("--no-tasks", type=int, default=-1)
+    parser.add_argument("--latent-dim", type=int, default=5)
+    parser.add_argument('--disable-latent', dest='disable_latent', action='store_true')
+
 
     main(parser.parse_args())
