@@ -27,7 +27,7 @@ class IiwaInsertionEnv(gym.Env):
         self.target_size = 0.05
 
         self.base_position = [0.6, 0.0, 0.0]
-        self.kuka_reset_position = [0.6, 0, 0.4]
+        self.kuka_reset_position = [0.6, 0, 0.2]
 
         x_limits = [self.kuka_reset_position[0]-0.1, self.kuka_reset_position[0]+0.1]
         y_limits = [self.kuka_reset_position[1]-0.1, self.kuka_reset_position[1]+0.1]
@@ -50,9 +50,9 @@ class IiwaInsertionEnv(gym.Env):
                             ("square", "none"),
                             ("square", "static"),
                             ("square", "spring"),
-                            ("zylindric", "none"),
-                            ("zylindric", "static"),
-                            ("zylindric", "spring"),
+                            #("zylindric", "none"),
+                            #("zylindric", "static"),
+                            #("zylindric", "spring"),
                          ]
         else:
             self.tasks = tasks
