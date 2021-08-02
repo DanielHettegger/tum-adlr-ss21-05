@@ -133,7 +133,8 @@ class IiwaInsertionEnv(gym.Env):
         print("Resetting to task {}".format(task_id))
         if self.current_task is not task_id:
             tool, disturbance = self.tasks[task_id]
-            self.kuka_iiwa.reset_tool(tool)
+            if self.kuka_iiwa.tool is not tool:
+                self.kuka_iiwa.reset_tool(tool)
             self._setup_disturbance(disturbance)
             self.current_task = task_id
         return self.reset()
