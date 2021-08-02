@@ -45,12 +45,16 @@ def main(args):
 
     model = PEARL("MlpPolicy", env, 
         verbose=args.verbosity, 
+        learning_rate=args.learning_rate,
         train_freq=(args.train_freq_num, args.train_freq_type), 
         batch_size=args.batch_size,
         n_traintasks = no_tasks,
         n_evaltasks = no_tasks,
         n_epochtasks= no_tasks,
         latent_dim = args.latent_dim)
+
+    if args.disable_latent:
+        model.actor.use_latent = 0
     
     model.set_logger(Logger(log_dir, [CSVOutputFormat(log_dir+"log.csv")]))
 
@@ -120,9 +124,11 @@ if __name__ == '__main__':
     parser.add_argument("--train_freq_type", type=str, default="episode", choices=["episode","step"]) 
     parser.add_argument("--batch_size", type=int, default=256)    
     parser.add_argument('--no-logging', dest='no_logging', action='store_true')
-    parser.add_argument("--no-tasks", type=int, default=-1)
+    parser.add_argument('-n',"--no-tasks", type=int, default=-1)
     parser.add_argument("--latent-dim", type=int, default=5)
     parser.add_argument('--disable-latent', dest='disable_latent', action='store_true')
+    parser.add_argument('-l',"--learning-rate", type=float, default=0.001)
+
 
 
     main(parser.parse_args())
