@@ -104,10 +104,10 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
             os.makedirs(self.save_path, exist_ok=True)
 
     def _on_step(self) -> bool:
-        kl_div = self.locals.kl_div.item()
-        kl_loss = self.locals.kl_loss.item()
-        critic_loss = self.locals.critic_loss.item()
-        actor_loss = self.locals.actor_loss.item()
+        kl_div = self.locals.["kl_div"].item()
+        kl_loss = self.locals.["kl_loss"].item()
+        critic_loss = self.locals.["critic_loss"].item()
+        actor_loss = self.locals.["actor_loss"].item()
 
         if self.wandb_logging:
             wandb.log({"kl_div": kl_div, "kl_loss":kl_loss, "critic_loss":critic_loss, "actor_loss":actor_loss})
