@@ -14,7 +14,7 @@ from .disturbance_force import StaticForce, SpringForceXY
 class IiwaInsertionEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self,  steps_per_action=1, max_steps=1000, action_step_size=0.005, tasks=None, use_gui=False, apply_disturbance_force=True):
+    def __init__(self,  steps_per_action=100, max_steps=1000, action_step_size=0.005, tasks=None, use_gui=False, apply_disturbance_force=True):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
@@ -27,7 +27,7 @@ class IiwaInsertionEnv(gym.Env):
         self.target_size = 0.05
 
         self.base_position = [0.6, 0.0, 0.0]
-        self.kuka_reset_position = [0.6, 0, 0.2]
+        self.kuka_reset_position = [0.6, 0.0, 0.25]
 
         x_limits = [self.kuka_reset_position[0]-0.1, self.kuka_reset_position[0]+0.1]
         y_limits = [self.kuka_reset_position[1]-0.1, self.kuka_reset_position[1]+0.1]
@@ -163,19 +163,19 @@ class IiwaInsertionEnv(gym.Env):
 
     def step(self, action):
         self.steps += 1
-        action = (self.action_step_size * np.array(action))
+        scaled_action = (self.action_step_size * np.array(action))
 
         position = np.copy(self.observation_position)
         for i, limit in enumerate(self.limits):
             position[i] = np.clip(position[i], limit[0], limit[1])
 
-        self.kuka_iiwa.apply_action(action, position)
+        self.kuka_iiwa.apply_action(scaled_action, position)
         for i in range (self.steps_per_action):
             self.kuka_iiwa.step_controller()
             self.kuka_iiwa.apply_tcp_force(self.disturbance.get_force(self.observation_position))
             p.stepSimulation()
         observation = self.get_observation()
-        reward = self.calculate_reward(observation)
+        reward = self.calculate_reward(observation, action)
 
         observation_with_velocity = np.append(
                     observation / self.max_observation,
@@ -184,11 +184,18 @@ class IiwaInsertionEnv(gym.Env):
 
         return observation_with_velocity,  reward, self.is_done(observation), {}
 
-    def calculate_reward(self, observation):
+    def calculate_reward(self, observation, action):
+        reward = 0
         if self.last_observation_position is not None:
-            return np.linalg.norm(self.target_position - self.last_observation_position) - np.linalg.norm(observation) - 2.0 * np.linalg.norm(observation[:2]) - 0.002
-        else:
-            return 0.0 
+            reward += ( #np.linalg.norm(self.target_position - self.last_observation_position) - np.linalg.norm(observation) # reward for incremental improvements
+                      -np.linalg.norm(observation)
+                      -2.0 * np.linalg.norm(observation[:2]) # punishment for xy deviation
+                      -0.002) # punishment for every timestep
+        if np.abs(action[2]) < 0.6:
+            reward -= 1 - np.abs(action[2]) # punish small z actions
+        if (np.linalg.norm(observation) < self.target_size).item():
+            reward += 3 # reward for finishing 
+        return reward
 
     def get_observation(self):
         current_position = np.array(self.kuka_iiwa.get_observation()[:3])

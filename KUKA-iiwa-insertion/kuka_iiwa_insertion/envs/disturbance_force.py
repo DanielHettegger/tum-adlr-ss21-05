@@ -12,7 +12,7 @@ class DisturbanceForce():
         raise NotImplementedError
 
 class StaticForce(DisturbanceForce):
-    def __init__(self, max_force=0.1, direction=None, magnitude=None):
+    def __init__(self, max_force=0.05, direction=None, magnitude=None):
         self.magnitude = magnitude
         self.direction = direction
         self.max_force = max_force
@@ -34,7 +34,7 @@ class StaticForce(DisturbanceForce):
             
 
 class SpringForceXY(DisturbanceForce):
-    def __init__(self, max_magnitude=0.1, distance=None, direction=None, spring_konstant=None, position=None, center_position=[0.6,0.0]): # center position
+    def __init__(self, max_magnitude=0.2, distance=None, direction=None, spring_konstant=None, position=None, center_position=[0.6,0.0]): # center position
         self.max_magnitude = max_magnitude
         self.distance = distance
         self.direction = direction
@@ -46,7 +46,7 @@ class SpringForceXY(DisturbanceForce):
 
     def generate(self):
         if self.direction is not None:
-            position = direction * np.random.rand(1)
+            position = self.direction * np.random.rand(1)
         else:
             position = get_random_vector(2)
 

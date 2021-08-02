@@ -196,8 +196,8 @@ class KukaIIWA:
       q_des = np.array(self.target_q)
       q_dot = np.array(q_dot)
       M = np.array(M)
-      K = np.eye(len(q)) * 80
-      D = np.eye(len(q)) * 0.1
+      K = np.eye(len(q)) * 90.0
+      D = np.eye(len(q)) * 0.2
 
       t = M @ (-K @ (q - q_des) - D @ q_dot)
       
@@ -219,7 +219,7 @@ class KukaIIWA:
   
   def apply_tcp_force(self, force):
     p.applyExternalForce(self.kuka_uid,
-                         self.ee_index,
+                         self.ee_index-2,
                          force,
                          [0,0,0],
                          p.WORLD_FRAME,
