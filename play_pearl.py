@@ -2,22 +2,26 @@ import gym
 import numpy as np
 from stable_baselines3.common.callbacks import EventCallback
 import torch as th
+import sys
+import argparse
+
 
 import kuka_iiwa_insertion
 
 from stable_baselines3 import PEARL
 
 
-def play():
+def play(args):
     env = gym.make('kuka_iiwa_insertion-v0', use_gui=True)
-    model = PEARL.load("models/feasible-dust-68_latest_model", env=env)
+    model = PEARL.load(args.model, env=env)
 
     model.callback = EventCallback()
 
+    no_tasks = args.no_tasks if args.no_tasks is not -1 else env.number_of_tasks
 
     i = 0
     while True:
-        task_idx = i%env.number_of_tasks
+        task_idx = i % no_tasks
         reward = eval_task(model, model.env, task_idx)
         print("Task {} Average reward was {}".format(task_idx, reward))
         i+=1
@@ -72,4 +76,8 @@ def eval_task(model, env, task_idx):
         return (np.sum(rwd) / n_trajs)
 
 if __name__ == "__main__":
-    play()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--model", type=str, default="models/dashing-butterfly-85_best_model")
+    parser.add_argument("-n","--no-tasks", type=int, default=-1)
+
+    play(parser.parse_args())
