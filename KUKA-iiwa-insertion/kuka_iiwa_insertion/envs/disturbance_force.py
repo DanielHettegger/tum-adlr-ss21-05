@@ -20,12 +20,12 @@ class StaticForce(DisturbanceForce):
 
     def generate(self):
         if self.direction is not None:
-            self.force = self.direction
+            self.force = np.array(self.direction)
         else:
             self.force = get_random_vector()
 
         if self.magnitude is not None:
-            self.force *= self.magnitude / norm(self.force)
+            self.force = self.force * self.magnitude / norm(self.force)
         else:
             self.force *= self.max_force
 

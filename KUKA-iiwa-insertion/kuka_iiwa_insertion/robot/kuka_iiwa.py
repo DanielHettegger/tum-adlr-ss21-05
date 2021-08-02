@@ -75,6 +75,7 @@ class KukaIIWA:
     self.reset()
 
   def _load_with_tool(self, tool):
+    self.tool = tool
     
     p0 = bc.BulletClient(connection_mode=p.DIRECT)
     p1 = bc.BulletClient(connection_mode=p.DIRECT)
@@ -88,7 +89,7 @@ class KukaIIWA:
       tool = p1.loadURDF(get_resource_path('kuka_iiwa_insertion','models', 'zylinder10x10', 'ZylinderTool9x9.urdf'))
     else:
       raise NotImplementedError("This tool has not been implemented")
-    self.tool = tool
+    
 
     ed0 = ed.UrdfEditor()
     ed0.initializeFromBulletBody(kuka, p0._client)

@@ -47,21 +47,21 @@ class IiwaInsertionEnv(gym.Env):
 
         if tasks is None:
             self.tasks = [
-                            ("square", "none", [0,0,0]),                            
-                            ("square", StaticForce(direction=[ 0, 1],magnitude=0.2), [0,0,0]),
-                            ("square", StaticForce(direction=[ 1, 0],magnitude=0.2), [0,0,0]),
-                            ("square", StaticForce(direction=[ 0,-1],magnitude=0.2), [0,0,0]),
-                            ("square", StaticForce(direction=[-1, 0],magnitude=0.2), [0,0,0]),
-                            #("square", "none", [ 0.2,   0, 0]),  
-                            #("square", "none", [-0.2,   0, 0]),  
-                            #("square", "none", [   0, 0.2, 0]),  
-                            #("square", "none", [   0,-0.2, 0]),  
+                            ("square", "none", [0.0,0.0,0.0]),                            
+                            ("square", StaticForce(direction=[ 0.0, 1.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            ("square", StaticForce(direction=[ 1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            ("square", StaticForce(direction=[ 0.0,-1.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            ("square", StaticForce(direction=[-1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            #("square", "none", [ 0.05,   0, 0]),  
+                            #("square", "none", [-0.05,   0, 0]),  
+                            #("square", "none", [   0, 0.05, 0]),  
+                            #("square", "none", [   0,-0.05, 0]),  
                          ]
         else:
             self.tasks = tasks
         
         self.number_of_tasks = len(self.tasks)
-        self.current_task = 0
+        self.current_task = -1
 
         self.use_gui = use_gui
         if use_gui:
@@ -131,7 +131,7 @@ class IiwaInsertionEnv(gym.Env):
         self._generate_task()
         self.steps = 0
 
-        return np.append(self.get_observation(),[0,0,0])
+        return np.append((self.get_observation()-self.offset)/self.max_observation,[0,0,0])
 
     def reset_task(self, task_id):
         print("Resetting to task {}".format(task_id))
@@ -190,7 +190,7 @@ class IiwaInsertionEnv(gym.Env):
         reward = self.calculate_reward(observation, action)
 
         observation_with_velocity = np.append(
-                    observation - self.offset / self.max_observation,
+                    (observation - self.offset) / self.max_observation,
                     (self.observation_position-self.last_observation_position) / self.action_step_size
                 )
 
