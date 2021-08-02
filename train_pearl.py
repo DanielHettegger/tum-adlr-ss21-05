@@ -126,7 +126,7 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--verbosity", type=int, default=1)
-    parser.add_argument("-s", "--max_steps", type=int, default=1000)
+    parser.add_argument("-s", "--max_steps", type=int, default=100)
     parser.add_argument("--action_step_size", type=float, default=0.005)
     parser.add_argument("--steps_per_action", type=int, default=100)    
     parser.add_argument("--train_freq_num", type=int, default=1)    
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     parser.add_argument("--batch_size", type=int, default=256)    
     parser.add_argument('--no-logging', dest='no_logging', action='store_true')
     parser.add_argument('-n',"--no-tasks", type=int, default=-1)
-    parser.add_argument("--latent-dim", type=int, default=5)
+    parser.add_argument("--latent-dim", type=int, default=2)
     parser.add_argument('--disable-latent', dest='disable_latent', action='store_true')
     parser.add_argument('-l',"--learning-rate", type=float, default=0.001)
 
