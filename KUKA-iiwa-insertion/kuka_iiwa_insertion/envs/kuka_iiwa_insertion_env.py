@@ -47,12 +47,11 @@ class IiwaInsertionEnv(gym.Env):
 
         if tasks is None:
             self.tasks = [
-                            ("square", "none"),
-                            ("square", "static"),
-                            ("square", "spring"),
-                            #("zylindric", "none"),
-                            #("zylindric", "static"),
-                            #("zylindric", "spring"),
+                            ("square", "none"),                            
+                            ("square", StaticForce(direction=[ 0, 1],magnitude=0.2)),
+                            ("square", StaticForce(direction=[ 1, 0],magnitude=0.2)),
+                            ("square", StaticForce(direction=[ 0,-1],magnitude=0.2)),
+                            ("square", StaticForce(direction=[-1, 0],magnitude=0.2)),
                          ]
         else:
             self.tasks = tasks
