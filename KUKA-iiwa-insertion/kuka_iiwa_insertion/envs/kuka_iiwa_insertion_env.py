@@ -29,8 +29,8 @@ class IiwaInsertionEnv(gym.Env):
         self.base_position = [0.6, 0.0, 0.0]
         self.kuka_reset_position = [0.6, 0.0, 0.4]
 
-        x_limits = [self.kuka_reset_position[0]-0.1, self.kuka_reset_position[0]+0.1]
-        y_limits = [self.kuka_reset_position[1]-0.1, self.kuka_reset_position[1]+0.1]
+        x_limits = [self.kuka_reset_position[0]-0.3, self.kuka_reset_position[0]+0.3]
+        y_limits = [self.kuka_reset_position[1]-0.3, self.kuka_reset_position[1]+0.3]
         z_limits = [0, self.kuka_reset_position[2]+0.1]
         self.limits = [x_limits, y_limits, z_limits]
 
@@ -47,11 +47,15 @@ class IiwaInsertionEnv(gym.Env):
 
         if tasks is None:
             self.tasks = [
-                            ("square", "none"),                            
-                            ("square", StaticForce(direction=[ 0, 1],magnitude=0.2)),
-                            ("square", StaticForce(direction=[ 1, 0],magnitude=0.2)),
-                            ("square", StaticForce(direction=[ 0,-1],magnitude=0.2)),
-                            ("square", StaticForce(direction=[-1, 0],magnitude=0.2)),
+                            ("square", "none", [0,0,0]),                            
+                            ("square", StaticForce(direction=[ 0, 1],magnitude=0.2), [0,0,0]),
+                            ("square", StaticForce(direction=[ 1, 0],magnitude=0.2), [0,0,0]),
+                            ("square", StaticForce(direction=[ 0,-1],magnitude=0.2), [0,0,0]),
+                            ("square", StaticForce(direction=[-1, 0],magnitude=0.2), [0,0,0]),
+                            #("square", "none", [ 0.2,   0, 0]),  
+                            #("square", "none", [-0.2,   0, 0]),  
+                            #("square", "none", [   0, 0.2, 0]),  
+                            #("square", "none", [   0,-0.2, 0]),  
                          ]
         else:
             self.tasks = tasks
@@ -70,7 +74,8 @@ class IiwaInsertionEnv(gym.Env):
         self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool=self.tasks[self.current_task][0], control_mode="impedance")
         self._setup_task()
         self.rendered_img = None
-        self.reset()
+        self.offset = np.array([0,0,0])
+        self.reset_task(0)
     
     def _generate_task(self):
         self._generate_force_disturbance()
@@ -131,10 +136,12 @@ class IiwaInsertionEnv(gym.Env):
     def reset_task(self, task_id):
         print("Resetting to task {}".format(task_id))
         if self.current_task is not task_id:
-            tool, disturbance = self.tasks[task_id]
+            tool, disturbance, offset = self.tasks[task_id]
             if self.kuka_iiwa.tool is not tool:
                 self.kuka_iiwa.reset_tool(tool)
             self._setup_disturbance(disturbance)
+            self.offset = np.array(offset)
+            self.kuka_iiwa.reset_position = self.kuka_reset_position - self.offset
             self.current_task = task_id
         return self.reset()
 
@@ -183,7 +190,7 @@ class IiwaInsertionEnv(gym.Env):
         reward = self.calculate_reward(observation, action)
 
         observation_with_velocity = np.append(
-                    observation / self.max_observation,
+                    observation - self.offset / self.max_observation,
                     (self.observation_position-self.last_observation_position) / self.action_step_size
                 )
 
