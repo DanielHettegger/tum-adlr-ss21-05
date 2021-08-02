@@ -8,7 +8,7 @@ from numpy import sin, cos
 
 from ..files import get_resource_path
 from ..robot.kuka_iiwa import KukaIIWA
-from .disturbance_force import StaticForce, SpringForceXY
+from .disturbance_force import StaticForce, SpringForceXY, DisturbanceForce
 
 
 class IiwaInsertionEnv(gym.Env):
@@ -27,7 +27,7 @@ class IiwaInsertionEnv(gym.Env):
         self.target_size = 0.05
 
         self.base_position = [0.6, 0.0, 0.0]
-        self.kuka_reset_position = [0.6, 0.0, 0.25]
+        self.kuka_reset_position = [0.6, 0.0, 0.4]
 
         x_limits = [self.kuka_reset_position[0]-0.1, self.kuka_reset_position[0]+0.1]
         y_limits = [self.kuka_reset_position[1]-0.1, self.kuka_reset_position[1]+0.1]
@@ -93,10 +93,15 @@ class IiwaInsertionEnv(gym.Env):
         self._setup_disturbance(self.tasks[self.current_task][1])
 
     def _setup_disturbance(self, disturbance="none"):
-        if disturbance is "static":
-            self.disturbance = StaticForce()
-        elif disturbance is "spring":
-            self.disturbance = SpringForceXY()
+        if isinstance(disturbance, str): 
+            if disturbance is "static":
+                self.disturbance = StaticForce()
+            elif disturbance is "spring":
+                self.disturbance = SpringForceXY()
+            else:
+                self.disturbance = StaticForce(magnitude=0)
+        elif isinstance(disturbance, DisturbanceForce):
+            self.disturbance = disturbance
         else:
             self.disturbance = StaticForce(magnitude=0)
      
