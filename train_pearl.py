@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 import argparse
 import time
+import torch
 
 import kuka_iiwa_insertion
 from numpy.core.fromnumeric import mean
@@ -22,6 +23,7 @@ from stable_baselines3.common.evaluation import evaluate_meta_policy
 import wandb
 
 def main(args):
+    torch.set_num_threads(10) 
     print(args)
     # 1. Start a W&B run
     if not args.no_logging:
