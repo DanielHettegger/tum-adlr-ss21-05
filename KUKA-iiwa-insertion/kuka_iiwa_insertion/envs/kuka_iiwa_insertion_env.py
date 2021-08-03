@@ -48,14 +48,14 @@ class IiwaInsertionEnv(gym.Env):
         if tasks is None:
             self.tasks = [
                             ("square", "none", [0.0,0.0,0.0]),                            
-                            #("square", StaticForce(direction=[ 0.0, 1.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
-                            #("square", StaticForce(direction=[ 1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
-                            #("square", StaticForce(direction=[ 0.0,-1.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
-                            #("square", StaticForce(direction=[-1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
-                            ("square", "none", [ 0.05,   0, 0]),  
-                            ("square", "none", [-0.05,   0, 0]),  
-                            ("square", "none", [   0, 0.05, 0]),  
-                            ("square", "none", [   0,-0.05, 0]),  
+                            ("square", StaticForce(direction=[ 0.0, 1.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            ("square", StaticForce(direction=[ 1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            ("square", StaticForce(direction=[ 0.0,-1.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            ("square", StaticForce(direction=[-1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            #("square", "none", [ 0.05,   0, 0]),  
+                            #("square", "none", [-0.05,   0, 0]),  
+                            #("square", "none", [   0, 0.05, 0]),  
+                            #("square", "none", [   0,-0.05, 0]),  
                          ]
         else:
             self.tasks = tasks
@@ -197,16 +197,10 @@ class IiwaInsertionEnv(gym.Env):
         return observation_with_velocity,  reward, self.is_done(observation), {}
 
     def calculate_reward(self, observation, action):
-        reward = 0
-        if self.last_observation_position is not None:
-            reward += ( #np.linalg.norm(self.target_position - self.last_observation_position) - np.linalg.norm(observation) # reward for incremental improvements
-                      -np.linalg.norm(observation)
-                      -2.0 * np.linalg.norm(observation[:2]) # punishment for xy deviation
-                      -0.002) # punishment for every timestep
-        if np.abs(action[2]) < 0.6:
-            reward -= 1 - np.abs(action[2]) # punish small z actions
+        reward = -np.linalg.norm(observation)
+
         if (np.linalg.norm(observation) < self.target_size).item():
-            reward += 3 # reward for finishing 
+            reward += 100 
         return reward
 
     def get_observation(self):
