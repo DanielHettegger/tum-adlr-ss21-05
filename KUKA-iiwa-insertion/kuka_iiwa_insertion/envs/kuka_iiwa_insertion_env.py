@@ -52,10 +52,10 @@ class IiwaInsertionEnv(gym.Env):
                             #("square", StaticForce(direction=[ 1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
                             #("square", StaticForce(direction=[ 0.0,-1.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
                             #("square", StaticForce(direction=[-1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
-                            ("square", "none", [ 0.025,   0, 0]),  
-                            ("square", "none", [-0.025,   0, 0]),  
-                            ("square", "none", [   0, 0.025, 0]),  
-                            ("square", "none", [   0,-0.025, 0]),  
+                            ("square", "none", [ 0.05,   0, 0]),  
+                            ("square", "none", [-0.05,   0, 0]),  
+                            ("square", "none", [   0, 0.05, 0]),  
+                            ("square", "none", [   0,-0.05, 0]),  
                          ]
         else:
             self.tasks = tasks
