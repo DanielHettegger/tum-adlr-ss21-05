@@ -17,6 +17,9 @@ def play(args):
 
     model.callback = EventCallback()
 
+    if args.disable_latent:
+        model.actor.use_latent = 0
+
     no_tasks = args.no_tasks if args.no_tasks is not -1 else env.number_of_tasks
 
     i = 0
@@ -79,5 +82,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--model", type=str, default="models/dashing-butterfly-85_best_model")
     parser.add_argument("-n","--no-tasks", type=int, default=-1)
+    parser.add_argument('-d','--disable-latent', dest='disable_latent', action='store_true')
 
     play(parser.parse_args())
