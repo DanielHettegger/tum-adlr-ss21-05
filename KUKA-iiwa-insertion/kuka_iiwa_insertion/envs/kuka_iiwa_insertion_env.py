@@ -14,7 +14,7 @@ from .disturbance_force import StaticForce, SpringForceXY, DisturbanceForce
 class IiwaInsertionEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self,  steps_per_action=100, max_steps=100, action_step_size=0.005, tasks=None, use_gui=False):
+    def __init__(self,  steps_per_action=100, max_steps=100, action_step_size=0.005, tasks=None, use_gui=False, sleep_on_timestep=False):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
@@ -41,6 +41,8 @@ class IiwaInsertionEnv(gym.Env):
 
         self.observation_position = None
         self.last_observation_position = None
+
+        self.sleep_on_timestep = sleep_on_timestep
 
         self.np_random, _ = gym.utils.seeding.np_random()
 
@@ -164,6 +166,8 @@ class IiwaInsertionEnv(gym.Env):
             self.kuka_iiwa.step_controller()
             self.kuka_iiwa.apply_tcp_force(self.disturbance.get_force(self.observation_position))
             p.stepSimulation()
+            if self.sleep_on_timestep:
+                time.sleep(1.0/240.0)
         observation = self.get_observation()
         reward = self.calculate_reward(observation, action)
 
