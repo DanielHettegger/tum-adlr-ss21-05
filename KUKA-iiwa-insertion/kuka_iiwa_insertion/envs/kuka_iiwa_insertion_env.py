@@ -14,7 +14,7 @@ from .disturbance_force import StaticForce, SpringForceXY, DisturbanceForce
 class IiwaInsertionEnv(gym.Env):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self,  steps_per_action=100, max_steps=100, action_step_size=0.005, tasks=None, use_gui=False, apply_disturbance_force=True):
+    def __init__(self,  steps_per_action=100, max_steps=100, action_step_size=0.005, tasks=None, use_gui=False):
         super(IiwaInsertionEnv, self).__init__()
         self.action_space = gym.spaces.box.Box(
             low=np.array([-1]*3),
@@ -38,7 +38,6 @@ class IiwaInsertionEnv(gym.Env):
 
         self.max_steps = max_steps
         self.steps_per_action = steps_per_action
-        self.apply_disturbance_force = apply_disturbance_force
 
         self.observation_position = None
         self.last_observation_position = None
