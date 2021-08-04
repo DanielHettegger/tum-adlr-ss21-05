@@ -4,7 +4,7 @@ import kuka_iiwa_insertion
 import time
 
 
-env = gym.make('kuka_iiwa_insertion-v0', use_gui=True, max_steps=100, sleep_on_timestep=True)
+env = gym.make('kuka_iiwa_insertion-v0', use_gui=True, max_steps=100, sleep_on_timestep=(1./500.))
 #env.reset()
 observation = [0,0,0]
 current_task_id = 0
