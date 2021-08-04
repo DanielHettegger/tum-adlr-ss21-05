@@ -47,14 +47,14 @@ class IiwaInsertionEnv(gym.Env):
         if tasks is None:
             self.tasks = [
                             ("square", "none", [0.0,0.0,0.0]),                            
-                            ("square", StaticForce(direction=[ 0.0, 1.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
-                            ("square", StaticForce(direction=[ 1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
-                            ("square", StaticForce(direction=[ 0.0,-1.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
-                            ("square", StaticForce(direction=[-1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
-                            #("square", "none", [ 0.05,   0, 0]),  
-                            #("square", "none", [-0.05,   0, 0]),  
-                            #("square", "none", [   0, 0.05, 0]),  
-                            #("square", "none", [   0,-0.05, 0]),  
+                            #("square", StaticForce(direction=[ 0.0, 1.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            #("square", StaticForce(direction=[ 1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            #("square", StaticForce(direction=[ 0.0,-1.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            #("square", StaticForce(direction=[-1.0, 0.0, 0.0],magnitude=0.2), [0.0,0.0,0.0]),
+                            ("square", "none", [ 0.05,   0, 0]),  
+                            ("square", "none", [-0.05,   0, 0]),  
+                            ("square", "none", [   0, 0.05, 0]),  
+                            ("square", "none", [   0,-0.05, 0]),  
                          ]
         else:
             self.tasks = tasks
@@ -72,7 +72,6 @@ class IiwaInsertionEnv(gym.Env):
         self.visual_target = None
         self.kuka_iiwa = KukaIIWA(self.client, self.kuka_reset_position, tool=self.tasks[self.current_task][0], control_mode="impedance")
         self._setup_task()
-        self.rendered_img = None
         self.offset = np.array([0,0,0])
         self.reset_task(0)
     
@@ -143,26 +142,6 @@ class IiwaInsertionEnv(gym.Env):
             self.kuka_iiwa.reset_position = self.kuka_reset_position - self.offset
             self.current_task = task_id
         return self.reset()
-
-    def render(self):
-        # Base information
-        kuka_id, client_id = self.kuka_iiwa.get_ids()
-        proj_matrix = p.computeProjectionMatrixFOV(fov=80, aspect=1,
-                                                   nearVal=0.01, farVal=100)
-        pos, ori = [list(l) for l in
-                    p.getBasePositionAndOrientation(kuka_id, client_id)]
-
-        # Rotate camera direction
-        rot_mat = np.array(p.getMatrixFromQuaternion(ori)).reshape(3, 3)
-        camera_vec = np.matmul(rot_mat, [1, 0, 0])
-        up_vec = [0,0,1]
-        view_matrix = p.computeViewMatrix(pos, pos + camera_vec, up_vec)
-
-        # Display image
-        _,_,frame,_,_ = p.getCameraImage(800, 800)#, view_matrix, proj_matrix)[2]
-        frame = np.reshape(frame, (800, 800, 4))
-        self.rendered_img.set_data(frame)
-        return frame
 
     def close(self): 
         self.closed = True
