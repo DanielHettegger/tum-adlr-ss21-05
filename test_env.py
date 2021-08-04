@@ -4,7 +4,7 @@ import kuka_iiwa_insertion
 import time
 
 
-env = gym.make('kuka_iiwa_insertion-v0', use_gui=True, max_steps=100, sleep_on_timestep=(1./500.))
+env = gym.make('kuka_iiwa_insertion-v0', use_gui=True, max_steps=100, sleep_on_timestep=(1./2000.))
 #env.reset()
 observation = [0,0,0]
 current_task_id = 0
@@ -31,6 +31,6 @@ for i in range(100000):
         current_task_id %= env.number_of_tasks
         print("Resetting Env to id {}".format(current_task_id))
         env.reset_task(current_task_id)
-        time.sleep(1)
+        time.sleep(0.5)
 
 env.close()
